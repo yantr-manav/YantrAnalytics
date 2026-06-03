@@ -116,10 +116,10 @@ export default function Home() {
       {/* ── Hero ── */}
       <motion.section
         style={{ y: heroY, opacity: heroFade }}
-        className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-5 pb-24 pt-10 sm:px-8 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8"
+        className="relative z-10 mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-5 pb-24 pt-10 sm:px-8 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8"
       >
         {/* Left */}
-        <div className="max-w-xl">
+        <div className="min-w-0 max-w-xl">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -273,7 +273,7 @@ export default function Home() {
           </h2>
         </motion.div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f, i) => (
             <motion.div
               key={f.label}
@@ -309,7 +309,7 @@ export default function Home() {
           </h2>
         </motion.div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {STEPS.map((s, i) => (
             <motion.div
               key={s.n}

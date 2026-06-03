@@ -68,7 +68,7 @@ async def lifespan(app: FastAPI):
 
 # ─── FastAPI App ──────────────────────────────────────────────────────────────
 app = FastAPI(
-    title="ReachRadar Ultra API",
+    title="YantrAnalytics API",
     description="AI-Powered Creator Intelligence & Competitive Analysis Platform",
     version="3.0.0",
     lifespan=lifespan,
@@ -140,7 +140,7 @@ async def health():
 
     return {
         "status": "operational" if (ytdlp_ok and gemini_ok) else "degraded",
-        "service": "ReachRadar Ultra",
+        "service": "YantrAnalytics",
         "version": "3.0.0",
         "dependencies": {
             "yt_dlp": {"ok": ytdlp_ok, "version": ytdlp_version},

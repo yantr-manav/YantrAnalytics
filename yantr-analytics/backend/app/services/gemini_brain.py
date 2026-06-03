@@ -416,10 +416,11 @@ graph TD
     return raw
 
 
-def generate_content_calendar(handle: str, niche: str, analysis: dict, competitors: list[dict]) -> str:
+def generate_content_calendar(handle: str, niche: str, analysis: dict, competitors: list[dict]) -> dict:
     """
-    Gemini call to generate a 30-day content calendar.
+    LLM call to generate a 30-day content calendar.
     Based on competitor upload patterns and trend windows.
+    Returns the parsed JSON object: {"calendar": [...], "weekly_theme": {...}}.
     """
     comp_patterns = []
     for c in competitors[:3]:
