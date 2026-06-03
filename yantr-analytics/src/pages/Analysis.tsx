@@ -1,288 +1,315 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useId } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import mermaid from 'mermaid'
+import createPlotlyComponent from 'react-plotly.js/factory'
+import Plotly from 'plotly.js-basic-dist'
+import toast from 'react-hot-toast'
+import {
+  LayoutDashboard,
+  Swords,
+  TrendingUp,
+  FileText,
+  Wrench,
+  Target,
+  Anchor,
+  Eye,
+  MessageCircle,
+  ArrowLeft,
+  Users,
+  Satellite,
+  Crosshair,
+  BrainCircuit,
+  AlertTriangle,
+  Download,
+  CalendarDays,
+  Type,
+  ExternalLink,
+  Flame,
+  Loader2,
+  Sparkles,
+  type LucideIcon,
+} from 'lucide-react'
 import { useAnalysis } from '../hooks/useAnalysis'
 import { testTitles, generateCalendar, exportPdf } from '../api/client'
 import type { FullAnalysis, TitleVariation, CalendarEntry } from '../types'
-import toast from 'react-hot-toast'
-import { motion } from 'framer-motion'
-import Plotly from 'react-plotly.js'
+import {
+  palette,
+  chartColors,
+  plotlyLayout as sharedLayout,
+  plotlyConfig,
+  scoreColor,
+  scoreLabel,
+} from '../lib/theme'
+import { compact, bareHandle, normalizeHandle } from '../lib/format'
+import { BrandMark } from '../components/Logo'
 
 mermaid.initialize({
   startOnLoad: false,
-  theme: 'dark',
+  theme: 'base',
   themeVariables: {
-    primaryColor: '#7c3aed',
-    primaryTextColor: '#f1f5f9',
-    primaryBorderColor: '#8b5cf6',
-    lineColor: '#334155',
-    background: '#080b14',
+    primaryColor: '#11141d',
+    primaryTextColor: '#f3f6fb',
+    primaryBorderColor: palette.signal,
+    lineColor: palette.cyan,
+    secondaryColor: '#0c0e15',
+    tertiaryColor: '#0c0e15',
+    fontFamily: 'Hanken Grotesk, sans-serif',
+    background: '#07080c',
   },
 })
 
 type Tab = 'overview' | 'competitors' | 'trends' | 'report' | 'tools'
-const PlotComponent = ((Plotly as unknown as { default?: typeof Plotly }).default ?? Plotly)
+
+// Wire react-plotly.js to the lightweight "basic" distribution (bar/pie/scatter
+// only) instead of the ~4 MB full bundle — those are the only trace types used.
+const PlotComponent = createPlotlyComponent(Plotly)
 
 const LOADING_STEPS = [
-  { label: 'Harvesting channel data in parallel', sub: 'videos · shorts · community · subscribers', icon: '📡' },
-  { label: 'Scanning top competitors', sub: 'searching your niche via YouTube', icon: '🔍' },
-  { label: 'Detecting trend signals', sub: 'pytrends + YouTube search', icon: '📈' },
-  { label: 'Gemini AI synthesis', sub: 'master analysis + competitive report', icon: '🧠' },
-  { label: 'Building dashboard', sub: 'charts · radar · action plan', icon: '⚡' },
+  { icon: Satellite, label: 'Harvesting channel data', sub: 'videos · shorts · community · subscribers' },
+  { icon: Crosshair, label: 'Scanning competitors', sub: 'top channels in your niche' },
+  { icon: TrendingUp, label: 'Detecting trend signals', sub: 'rising YouTube queries' },
+  { icon: BrainCircuit, label: 'AI synthesis', sub: 'master analysis + competitive report' },
+  { icon: LayoutDashboard, label: 'Assembling dashboard', sub: 'charts · radar · action plan' },
 ] as const
 
-// ── Shared Plot Layout ─────────────────────────────────────────────────────────
-const sharedLayout = {
-  paper_bgcolor: 'transparent',
-  plot_bgcolor: 'transparent',
-  font: { family: 'DM Sans, sans-serif', color: '#94a3b8' },
-  xaxis: { gridcolor: '#1e293b', color: '#475569', zeroline: false },
-  yaxis: { gridcolor: '#1e293b', color: '#475569', zeroline: false },
-}
-
-// ── Score Ring ─────────────────────────────────────────────────────────────────
-function ScoreRing({
-  score,
-  label,
-  color = '#7c3aed',
-  size = 100,
-}: {
-  score: number
-  label: string
-  color?: string
-  size?: number
-}) {
+// ── Score Ring ──────────────────────────────────────────────────────────────
+function ScoreRing({ score, label, size = 104 }: { score: number; label: string; size?: number }) {
   const r = size * 0.38
   const circ = 2 * Math.PI * r
   const safe = Math.min(100, Math.max(0, score || 0))
   const fill = (safe / 100) * circ
-  const qual = safe >= 70 ? '#34d399' : safe >= 45 ? '#fbbf24' : '#f87171'
-  const qualLabel = safe >= 70 ? 'STRONG' : safe >= 45 ? 'AVERAGE' : 'WEAK'
+  const color = scoreColor(safe)
+  const id = `ring-${label.replace(/\s/g, '')}`
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="relative">
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
           <defs>
-            <linearGradient id={`ring-${label.replace(/\s/g, '')}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id={id} x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor={color} />
               <stop offset="100%" stopColor={color + 'aa'} />
             </linearGradient>
           </defs>
-          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#0f172a" strokeWidth="8" />
-          <circle
-            cx={size / 2} cy={size / 2} r={r}
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#161a25" strokeWidth="8" />
+          <motion.circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
             fill="none"
-            stroke={`url(#ring-${label.replace(/\s/g, '')})`}
+            stroke={`url(#${id})`}
             strokeWidth="8"
-            strokeDasharray={`${fill} ${circ}`}
             strokeLinecap="round"
             transform={`rotate(-90 ${size / 2} ${size / 2})`}
-            style={{ transition: 'stroke-dasharray 1.6s cubic-bezier(0.4,0,0.2,1)' }}
+            strokeDasharray={`${circ} ${circ}`}
+            initial={{ strokeDashoffset: circ }}
+            animate={{ strokeDashoffset: circ - fill }}
+            transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
           />
-          <text x={size / 2} y={size / 2 - 4} textAnchor="middle" fill="white" fontSize={size * 0.2} fontWeight="800" fontFamily="DM Sans">{safe}</text>
-          <text x={size / 2} y={size / 2 + 12} textAnchor="middle" fill={qual} fontSize={size * 0.08} fontWeight="700" fontFamily="DM Sans">{qualLabel}</text>
+          <text x={size / 2} y={size / 2 - 3} textAnchor="middle" fill="#f3f6fb" fontSize={size * 0.22} fontWeight="800" fontFamily="JetBrains Mono">
+            {safe}
+          </text>
+          <text x={size / 2} y={size / 2 + 14} textAnchor="middle" fill={color} fontSize={size * 0.085} fontWeight="700" letterSpacing="1.5">
+            {scoreLabel(safe)}
+          </text>
         </svg>
-        <div
-          className="absolute inset-0 rounded-full pointer-events-none"
-          style={{ boxShadow: `0 0 28px ${color}22` }}
-        />
+        <div className="pointer-events-none absolute inset-0 rounded-full" style={{ boxShadow: `0 0 32px ${color}22` }} />
       </div>
-      <span className="text-xs font-semibold tracking-wider uppercase" style={{ color: '#64748b', letterSpacing: '0.1em' }}>{label}</span>
+      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-low">{label}</span>
     </div>
   )
 }
 
-// ── Stat Bar ───────────────────────────────────────────────────────────────────
+// ── Stat Bar ──────────────────────────────────────────────────────────────────
 function StatBar({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="group">
-      <div className="flex justify-between items-center text-xs mb-2">
-        <span className="text-slate-400 font-medium">{label}</span>
-        <span
-          className="font-black text-sm tabular-nums px-2 py-0.5 rounded-md"
-          style={{ color, background: color + '18' }}
-        >
-          {value}<span className="text-slate-600">/10</span>
+    <div>
+      <div className="mb-2 flex items-center justify-between text-xs">
+        <span className="font-medium text-ink-mid">{label}</span>
+        <span className="rounded-md px-2 py-0.5 font-mono text-sm font-bold tabular" style={{ color, background: color + '18' }}>
+          {value}
+          <span className="text-ink-faint">/10</span>
         </span>
       </div>
-      <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+      <div className="h-1.5 overflow-hidden rounded-full bg-[#161a25]">
         <motion.div
           initial={{ width: 0 }}
-          animate={{ width: `${(value / 10) * 100}%` }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+          whileInView={{ width: `${(value / 10) * 100}%` }}
+          viewport={{ once: true }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.15 }}
           className="h-full rounded-full"
-          style={{ background: `linear-gradient(90deg, ${color}cc, ${color})` }}
+          style={{ background: `linear-gradient(90deg, ${color}bb, ${color})` }}
         />
       </div>
     </div>
   )
 }
 
-// ── Metric Card ────────────────────────────────────────────────────────────────
+// ── Metric Card ─────────────────────────────────────────────────────────────
 function MetricCard({
   label,
   value,
   sub,
-  accent = '#7c3aed',
-  icon,
+  accent = palette.signal,
+  icon: Icon,
 }: {
   label: string
   value: string | number
   sub?: string
   accent?: string
-  icon: string
+  icon: LucideIcon
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative rounded-2xl p-4 sm:p-5 overflow-hidden border border-slate-800 bg-slate-900/60 backdrop-blur-sm group hover:border-slate-700 transition-all duration-300"
+      className="group relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white/[0.02] p-4 backdrop-blur-sm transition-all duration-300 hover:border-[var(--color-border-strong)] sm:p-5"
     >
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-        style={{ background: `radial-gradient(circle at 0% 0%, ${accent}10, transparent 60%)` }}
+        className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        style={{ background: `radial-gradient(circle at 0% 0%, ${accent}12, transparent 60%)` }}
       />
-      <div className="flex items-start justify-between mb-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">{label}</p>
-        <span className="text-lg opacity-60">{icon}</span>
+      <div className="relative mb-3 flex items-start justify-between">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-ink-low">{label}</p>
+        <Icon size={16} style={{ color: accent }} />
       </div>
-      <p className="text-2xl sm:text-3xl font-black text-white leading-none mb-1 tabular-nums">{value}</p>
-      {sub && <p className="text-[11px] text-slate-500 font-medium mt-1">{sub}</p>}
-      <div
-        className="absolute bottom-0 left-0 h-0.5 w-full opacity-40"
-        style={{ background: `linear-gradient(90deg, ${accent}, transparent)` }}
-      />
+      <p className="relative font-mono text-2xl font-bold leading-none tabular text-ink sm:text-3xl">{value}</p>
+      {sub && <p className="relative mt-1.5 text-[11px] font-medium text-ink-low">{sub}</p>}
+      <div className="absolute bottom-0 left-0 h-0.5 w-full opacity-50" style={{ background: `linear-gradient(90deg, ${accent}, transparent)` }} />
     </motion.div>
   )
 }
 
-// ── Mermaid ────────────────────────────────────────────────────────────────────
+// ── Mermaid ───────────────────────────────────────────────────────────────────
 function MermaidChart({ code }: { code: string }) {
   const ref = useRef<HTMLDivElement>(null)
+  const reactId = useId()
+  const id = `mmd-${reactId.replace(/[^a-zA-Z0-9]/g, '')}`
   useEffect(() => {
     if (!ref.current || !code) return
-    const id = `mmd-${Date.now()}`
+    let cancelled = false
     mermaid
       .render(id, code)
       .then(({ svg }) => {
-        if (ref.current) ref.current.innerHTML = svg
+        if (!cancelled && ref.current) ref.current.innerHTML = svg
       })
       .catch(() => {
-        if (ref.current)
-          ref.current.innerHTML = `<pre class="text-xs text-slate-600 p-4">${code}</pre>`
+        if (!cancelled && ref.current) ref.current.innerHTML = `<pre class="text-xs text-ink-low p-4 overflow-auto">${code}</pre>`
       })
-  }, [code])
-  return <div ref={ref} className="w-full overflow-auto" />
+    return () => {
+      cancelled = true
+    }
+  }, [code, id])
+  return <div ref={ref} data-mermaid className="flex w-full justify-center overflow-auto" />
 }
 
-// ── Loading ────────────────────────────────────────────────────────────────────
+// ── Loading ─────────────────────────────────────────────────────────────────
 function LoadingWarRoom({ handle }: { handle: string }) {
   const [step, setStep] = useState(0)
+  const [secs, setSecs] = useState(0)
   useEffect(() => {
-    const id = setInterval(() => setStep((s) => Math.min(s + 1, LOADING_STEPS.length - 1)), 13000)
-    return () => clearInterval(id)
+    const stepId = setInterval(() => setStep((s) => Math.min(s + 1, LOADING_STEPS.length - 1)), 9000)
+    const tick = setInterval(() => setSecs((s) => s + 1), 1000)
+    return () => {
+      clearInterval(stepId)
+      clearInterval(tick)
+    }
   }, [])
+
   return (
-    <div className="min-h-screen bg-[#080b14] flex items-center justify-center p-6">
-      <div className="max-w-md w-full">
-        {/* Spinner */}
-        <div className="flex justify-center mb-12">
-          <div className="relative w-20 h-20">
+    <div className="grain flex min-h-screen items-center justify-center bg-base p-6">
+      <div className="w-full max-w-md">
+        <div className="mb-10 flex justify-center">
+          <div className="relative h-24 w-24">
             <div
-              className="absolute inset-0 rounded-full animate-spin"
+              className="absolute inset-0 animate-spin rounded-full"
               style={{
-                background: 'conic-gradient(from 0deg, transparent 0%, #7c3aed 100%)',
-                WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), white calc(100% - 3px))',
-                mask: 'radial-gradient(farthest-side, transparent calc(100% - 4px), white calc(100% - 3px))',
+                background: `conic-gradient(from 0deg, transparent 0%, ${palette.signal} 90%)`,
+                WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #fff calc(100% - 2px))',
+                mask: 'radial-gradient(farthest-side, transparent calc(100% - 3px), #fff calc(100% - 2px))',
               }}
             />
-            <div className="absolute inset-0 flex items-center justify-center text-2xl">⚡</div>
+            <div className="absolute inset-3 rounded-full border border-cyan/15" />
+            <div className="absolute inset-0 grid place-items-center">
+              <BrandMark size={36} />
+            </div>
           </div>
         </div>
 
-        <h2 className="text-2xl font-black text-white text-center mb-1 tracking-tight">War Room Active</h2>
-        <p className="text-slate-500 text-sm text-center mb-8">
-          Analyzing{' '}
-          <span className="text-violet-400 font-semibold">{handle}</span>
-          {' '}· 30–90 seconds
+        <h2 className="text-center font-display text-2xl text-ink">War room active</h2>
+        <p className="mt-1 text-center text-sm text-ink-mid">
+          Scanning <span className="font-semibold text-signal">{handle}</span>
+          <span className="mx-2 text-ink-faint">·</span>
+          <span className="font-mono tabular text-ink-low">{secs}s</span>
         </p>
 
-        <div className="space-y-2.5">
-          {LOADING_STEPS.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, x: -16 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all ${
-                i < step
-                  ? 'border-emerald-800/30 bg-emerald-950/20'
-                  : i === step
-                  ? 'border-violet-700/60 bg-violet-950/20'
-                  : 'border-slate-800 opacity-30'
-              }`}
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 font-bold ${
-                  i < step
-                    ? 'bg-emerald-800 text-emerald-200'
-                    : i === step
-                    ? 'bg-violet-700 text-white'
-                    : 'bg-slate-800 text-slate-600'
-                }`}
+        <div className="mt-8 space-y-2.5">
+          {LOADING_STEPS.map((s, i) => {
+            const done = i < step
+            const active = i === step
+            const Icon = s.icon
+            return (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="flex items-center gap-3 rounded-xl border p-3.5 transition-all"
+                style={{
+                  borderColor: done ? palette.signal + '40' : active ? palette.cyan + '66' : 'var(--color-border)',
+                  background: done ? palette.signal + '0e' : active ? palette.cyan + '0e' : 'transparent',
+                  opacity: !done && !active ? 0.4 : 1,
+                }}
               >
-                {i < step ? '✓' : s.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-sm font-semibold ${i === step ? 'text-white' : i < step ? 'text-emerald-400' : 'text-slate-600'}`}>
-                  {s.label}
-                </p>
-                <p className="text-[10px] text-slate-600 truncate">{s.sub}</p>
-              </div>
-              {i === step && (
-                <div className="flex gap-1">
-                  {[0, 1, 2].map((dot) => (
-                    <div
-                      key={dot}
-                      className="w-1 h-1 bg-violet-400 rounded-full animate-bounce"
-                      style={{ animationDelay: `${dot * 0.15}s` }}
-                    />
-                  ))}
+                <div
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-full"
+                  style={{
+                    background: done ? palette.signal + '22' : active ? palette.cyan + '22' : '#161a25',
+                    color: done ? palette.signal : active ? palette.cyan : palette.textLow,
+                  }}
+                >
+                  {active ? <Loader2 size={15} className="animate-spin" /> : <Icon size={15} />}
                 </div>
-              )}
-            </motion.div>
-          ))}
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold" style={{ color: done ? palette.signal : active ? palette.textHi : palette.textLow }}>
+                    {s.label}
+                  </p>
+                  <p className="truncate text-[10px] text-ink-low">{s.sub}</p>
+                </div>
+                {done && <span className="text-signal">✓</span>}
+              </motion.div>
+            )
+          })}
         </div>
       </div>
     </div>
   )
 }
 
-// ── Error State ────────────────────────────────────────────────────────────────
+// ── Error State ───────────────────────────────────────────────────────────────
 function ErrorState({ message }: { message: string }) {
   return (
-    <div className="min-h-screen bg-[#080b14] flex items-center justify-center p-6">
+    <div className="grain flex min-h-screen items-center justify-center bg-base p-6">
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.92, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative rounded-2xl p-10 max-w-md text-center overflow-hidden border border-red-800/30 bg-red-950/10 backdrop-blur-sm"
+        className="glass-panel relative max-w-md overflow-hidden p-10 text-center"
+        style={{ borderColor: palette.rose + '40' }}
       >
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{ background: 'radial-gradient(ellipse at 50% 0%, #7f1d1d40, transparent 70%)' }}
-        />
+        <div className="absolute inset-0 opacity-30" style={{ background: `radial-gradient(ellipse at 50% 0%, ${palette.rose}33, transparent 70%)` }} />
         <div className="relative">
-          <div className="text-5xl mb-5">⚠️</div>
-          <h2 className="text-xl font-black text-red-400 mb-3 tracking-tight">Analysis Failed</h2>
-          <p className="text-slate-400 text-sm mb-2 leading-relaxed">{message}</p>
-          <p className="text-slate-600 text-xs mb-8">Channel may be private or the handle is incorrect.</p>
+          <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl" style={{ background: palette.rose + '18', color: palette.rose }}>
+            <AlertTriangle size={26} />
+          </div>
+          <h2 className="font-display text-xl text-ink">Analysis failed</h2>
+          <p className="mt-2 text-sm leading-relaxed text-ink-mid">{message}</p>
+          <p className="mt-1 text-xs text-ink-low">The channel may be private, or the handle is incorrect.</p>
           <Link
             to="/"
-            className="inline-flex items-center gap-2 bg-violet-700 hover:bg-violet-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition-all hover:shadow-[0_0_24px_rgba(124,58,237,0.4)]"
+            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-signal/90 px-6 py-2.5 text-sm font-bold text-[#06120d] transition-all hover:bg-signal"
           >
-            ← Try Another Handle
+            <ArrowLeft size={15} /> Try another handle
           </Link>
         </div>
       </motion.div>
@@ -290,7 +317,7 @@ function ErrorState({ message }: { message: string }) {
   )
 }
 
-// ── Section Wrapper ────────────────────────────────────────────────────────────
+// ── Section / Badge ─────────────────────────────────────────────────────────
 function Section({
   title,
   children,
@@ -303,12 +330,10 @@ function Section({
   className?: string
 }) {
   return (
-    <div
-      className={`rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm overflow-hidden ${className}`}
-    >
+    <div className={`overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white/[0.02] backdrop-blur-sm ${className}`}>
       {title && (
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-slate-800/60">
-          <h2 className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">{title}</h2>
+        <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 pb-4 pt-5">
+          <h2 className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink-low">{title}</h2>
           {action}
         </div>
       )}
@@ -317,11 +342,10 @@ function Section({
   )
 }
 
-// ── Badge ──────────────────────────────────────────────────────────────────────
-function Badge({ children, color = '#7c3aed' }: { children: React.ReactNode; color?: string }) {
+function Badge({ children, color = palette.signal }: { children: React.ReactNode; color?: string }) {
   return (
     <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border"
+      className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
       style={{ color, background: color + '15', borderColor: color + '40' }}
     >
       {children}
@@ -329,13 +353,16 @@ function Badge({ children, color = '#7c3aed' }: { children: React.ReactNode; col
   )
 }
 
-type Props = { data: FullAnalysis }
+const tabFade = {
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0 },
+}
 
-// ── Overview Tab ───────────────────────────────────────────────────────────────
-function OverviewTab({ data }: Props) {
-  const profile = data?.profile ?? {}
-  const analysis = data?.analysis ?? {}
-
+// ── Overview Tab ──────────────────────────────────────────────────────────────
+function OverviewTab({ data }: { data: FullAnalysis }) {
+  const profile = data?.profile ?? ({} as FullAnalysis['profile'])
+  const analysis = data?.analysis ?? ({} as FullAnalysis['analysis'])
   const allContent = [...(profile?.videos ?? []), ...(profile?.shorts ?? [])].slice(0, 25)
 
   const radarValues = [
@@ -346,34 +373,30 @@ function OverviewTab({ data }: Props) {
     Number(analysis?.radar_scores?.consistency ?? 5),
     Number(analysis?.radar_scores?.community ?? 5),
   ]
-
   const categories = ['Hook', 'Visual Quality', 'SEO', 'Engagement', 'Consistency', 'Community']
-  const COLORS = ['#7c3aed', '#3b82f6', '#0ea5e9', '#10b981', '#f59e0b', '#f43f5e']
   const radarAvg = Math.round((radarValues.reduce((a, b) => a + b, 0) / radarValues.length) * 10)
+  const topKeywords = analysis?.top_keywords ?? []
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
-
-      {/* Scores + Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <motion.div {...tabFade} className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Section title="AI Intelligence Scores">
-          <div className="flex justify-around items-center py-2">
-            <ScoreRing score={analysis?.viral_probability_score ?? 0} label="Viral Score" color="#7c3aed" />
-            <ScoreRing score={analysis?.hook_score ?? 0} label="Hook Score" color="#f59e0b" />
-            <ScoreRing score={radarAvg} label="Overall" color="#10b981" />
+          <div className="flex items-center justify-around py-2">
+            <ScoreRing score={analysis?.viral_probability_score ?? 0} label="Viral Score" />
+            <ScoreRing score={analysis?.hook_score ?? 0} label="Hook Score" />
+            <ScoreRing score={radarAvg} label="Overall" />
           </div>
         </Section>
 
         <Section title="Performance Breakdown">
           <div className="space-y-4">
             {categories.map((cat, i) => (
-              <StatBar key={cat} label={cat} value={radarValues[i]} color={COLORS[i]} />
+              <StatBar key={cat} label={cat} value={radarValues[i]} color={chartColors[i % chartColors.length]} />
             ))}
           </div>
         </Section>
       </div>
 
-      {/* View Velocity */}
       {allContent.length > 0 && (
         <Section title="View Velocity">
           <PlotComponent
@@ -384,30 +407,24 @@ function OverviewTab({ data }: Props) {
                 type: 'scatter',
                 mode: 'lines+markers',
                 fill: 'tozeroy',
-                line: { color: '#7c3aed', width: 2, shape: 'spline' },
-                fillcolor: 'rgba(124,58,237,0.07)',
-                text: allContent.map((v) => (v?.title ?? '').slice(0, 45) + '…'),
+                line: { color: palette.signal, width: 2, shape: 'spline' },
+                fillcolor: 'rgba(60,224,160,0.07)',
+                text: allContent.map((v) => (v?.title ?? '').slice(0, 46)),
                 marker: {
-                  color: allContent.map((v) => (v?.type === 'Short' ? '#f59e0b' : '#7c3aed')),
+                  color: allContent.map((v) => (v?.type === 'Short' ? palette.amber : palette.signal)),
                   size: 6,
                 },
                 hovertemplate: '<b>%{text}</b><br>%{y:,.0f} views<extra></extra>',
               },
             ]}
-            layout={{
-              ...sharedLayout,
-              height: 220,
-              margin: { t: 8, r: 10, b: 36, l: 60 },
-              showlegend: false,
-            }}
-            config={{ displayModeBar: false, responsive: true }}
+            layout={{ ...sharedLayout, height: 220, margin: { t: 8, r: 10, b: 36, l: 56 }, showlegend: false }}
+            config={plotlyConfig}
             style={{ width: '100%' }}
           />
         </Section>
       )}
 
-      {/* Top Content + Mix */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Section title="Top Performing Content">
           <div className="space-y-1">
             {[...(profile?.videos ?? []), ...(profile?.shorts ?? [])]
@@ -419,23 +436,23 @@ function OverviewTab({ data }: Props) {
                   href={v?.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-3 rounded-xl p-2 hover:bg-slate-800/60 transition-colors group"
+                  className="group flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-white/[0.04]"
                 >
-                  <span className="text-xs font-black text-slate-700 w-5 text-center">#{i + 1}</span>
+                  <span className="w-5 text-center font-mono text-xs font-bold text-ink-faint">{i + 1}</span>
                   {v?.thumbnail && (
                     <img
                       src={v.thumbnail}
-                      className="w-14 h-9 object-cover rounded-lg flex-shrink-0 group-hover:opacity-90 transition"
-                      onError={(e) => ((e.target as HTMLElement).style.display = 'none')}
+                      alt=""
+                      loading="lazy"
+                      className="h-9 w-14 shrink-0 rounded-lg object-cover transition group-hover:opacity-90"
+                      onError={(e) => ((e.currentTarget as HTMLImageElement).style.display = 'none')}
                     />
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-slate-200 truncate font-medium">{v?.title}</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5 font-semibold tabular-nums">
-                      {(v?.views ?? 0).toLocaleString()} views
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium text-ink" title={v?.title}>{v?.title}</p>
+                    <p className="mt-0.5 font-mono text-[10px] font-semibold tabular text-ink-low">{compact(v?.views)} views</p>
                   </div>
-                  <span className="text-slate-700 group-hover:text-slate-400 transition text-xs">↗</span>
+                  <ExternalLink size={13} className="text-ink-faint transition group-hover:text-ink-mid" />
                 </a>
               ))}
           </div>
@@ -453,31 +470,26 @@ function OverviewTab({ data }: Props) {
                 labels: ['Long-form', 'Shorts', 'Community'],
                 type: 'pie',
                 hole: 0.65,
-                marker: { colors: ['#7c3aed', '#f59e0b', '#10b981'] },
+                marker: { colors: [palette.signal, palette.amber, palette.cyan] },
                 textinfo: 'label+percent',
-                textfont: { color: '#94a3b8', size: 11 },
-                hovertemplate: '<b>%{label}</b><br>%{value} videos<extra></extra>',
+                textfont: { color: palette.textMid, size: 11 },
+                hovertemplate: '<b>%{label}</b><br>%{value} items<extra></extra>',
               },
             ]}
-            layout={{
-              ...sharedLayout,
-              height: 210,
-              showlegend: false,
-              margin: { t: 8, r: 8, b: 8, l: 8 },
-            }}
-            config={{ displayModeBar: false }}
+            layout={{ ...sharedLayout, height: 210, showlegend: false, margin: { t: 8, r: 8, b: 8, l: 8 } }}
+            config={plotlyConfig}
+            style={{ width: '100%' }}
           />
         </Section>
       </div>
 
-      {/* Keywords */}
-      {analysis?.top_keywords?.length > 0 && (
+      {topKeywords.length > 0 && (
         <Section title="SEO Keywords">
           <div className="flex flex-wrap gap-2">
-            {analysis.top_keywords.map((kw: string) => (
+            {topKeywords.map((kw: string) => (
               <span
                 key={kw}
-                className="px-3 py-1.5 text-xs font-semibold rounded-full border border-violet-800/40 bg-violet-950/30 text-violet-300 hover:bg-violet-900/30 transition-colors cursor-default"
+                className="cursor-default rounded-full border border-signal/30 bg-signal/8 px-3 py-1.5 font-mono text-xs font-semibold text-signal transition-colors hover:bg-signal/15"
               >
                 #{kw}
               </span>
@@ -489,26 +501,18 @@ function OverviewTab({ data }: Props) {
   )
 }
 
-// ── Competitors Tab ────────────────────────────────────────────────────────────
+// ── Competitors Tab ─────────────────────────────────────────────────────────
 function CompetitorsTab({ data }: { data: FullAnalysis }) {
   const { competitors } = data
   if (!competitors?.competitors?.length)
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="text-5xl mb-4 opacity-30">⚔️</div>
-        <p className="text-slate-400 text-sm font-semibold">No competitor data this time.</p>
-        <p className="text-slate-600 text-xs mt-1">Competitor scan timed out. Try clearing cache and reanalyzing.</p>
-      </div>
-    )
+    return <EmptyState icon={Swords} title="No competitor data this time." sub="The competitor scan timed out. Try clearing cache and reanalyzing." />
 
   const compViews = competitors.competitors.map(
-    (c) =>
-      (c.recent_videos || []).reduce((s, v) => s + (v.views || 0), 0) /
-      Math.max((c.recent_videos || []).length, 1),
+    (c) => (c.recent_videos || []).reduce((s, v) => s + (v.views || 0), 0) / Math.max((c.recent_videos || []).length, 1),
   )
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+    <motion.div {...tabFade} className="space-y-4">
       <Section title="Avg. Views per Video">
         <PlotComponent
           data={[
@@ -518,65 +522,45 @@ function CompetitorsTab({ data }: { data: FullAnalysis }) {
               type: 'bar',
               orientation: 'h',
               marker: {
-                color: compViews.map((_, i) =>
-                  i === 0 ? '#7c3aed' : `rgba(124,58,237,${Math.max(0.25, 1 - i * 0.15)})`,
-                ),
-                opacity: 0.9,
+                color: compViews.map((_, i) => (i === 0 ? palette.signal : `rgba(60,224,160,${Math.max(0.25, 1 - i * 0.15)})`)),
               },
               hovertemplate: '<b>%{y}</b><br>%{x:,.0f} avg views<extra></extra>',
             },
           ]}
-          layout={{
-            ...sharedLayout,
-            margin: { t: 8, r: 20, b: 36, l: 160 },
-            height: 260,
-            xaxis: { ...sharedLayout.xaxis, tickformat: ',.0f' },
-          }}
-          config={{ displayModeBar: false, responsive: true }}
+          layout={{ ...sharedLayout, margin: { t: 8, r: 20, b: 36, l: 150 }, height: 260, xaxis: { ...sharedLayout.xaxis, tickformat: ',.0f' } }}
+          config={plotlyConfig}
           style={{ width: '100%' }}
         />
       </Section>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {competitors.competitors.map((comp, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.06 }}
-            className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 hover:border-violet-700/40 transition-all duration-300 group"
+            className="rounded-2xl border border-[var(--color-border)] bg-white/[0.02] p-4 transition-all duration-300 hover:border-signal/30"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black text-white flex-shrink-0"
-                style={{ background: `linear-gradient(135deg, #7c3aed, #3b82f6)` }}
-              >
-                #{i + 1}
+            <div className="mb-4 flex items-center gap-3">
+              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-full font-mono text-xs font-bold text-[#06120d]" style={{ background: `linear-gradient(135deg, ${palette.signal}, ${palette.cyan})` }}>
+                {i + 1}
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-white truncate">{comp.name}</h3>
-                <a
-                  href={comp.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[10px] text-violet-400 hover:text-violet-300 transition-colors font-semibold"
-                >
-                  Visit Channel →
+              <div className="min-w-0 flex-1">
+                <h3 className="truncate text-sm font-bold text-ink">{comp.name}</h3>
+                <a href={comp.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[10px] font-semibold text-cyan transition-colors hover:text-signal">
+                  Visit channel <ExternalLink size={10} />
                 </a>
               </div>
             </div>
-            <div className="space-y-1.5 border-t border-slate-800 pt-3">
+            <div className="space-y-1.5 border-t border-[var(--color-border)] pt-3">
               {(comp.recent_videos || []).slice(0, 3).map((v, j) => (
                 <div key={j} className="flex justify-between gap-2 text-[11px]">
-                  <span className="text-slate-500 truncate">{(v.title || '').slice(0, 32)}…</span>
-                  <span className="text-slate-600 flex-shrink-0 font-mono tabular-nums">
-                    {(v.views || 0).toLocaleString()}
-                  </span>
+                  <span className="truncate text-ink-mid">{(v.title || '').slice(0, 34)}</span>
+                  <span className="shrink-0 font-mono tabular text-ink-low">{compact(v.views)}</span>
                 </div>
               ))}
-              {!comp.recent_videos?.length && (
-                <p className="text-slate-700 text-[11px]">No recent videos</p>
-              )}
+              {!comp.recent_videos?.length && <p className="text-[11px] text-ink-faint">No recent videos</p>}
             </div>
           </motion.div>
         ))}
@@ -591,79 +575,59 @@ function CompetitorsTab({ data }: { data: FullAnalysis }) {
   )
 }
 
-// ── Trends Tab ─────────────────────────────────────────────────────────────────
+// ── Trends Tab ────────────────────────────────────────────────────────────────
 function TrendsTab({ data }: { data: FullAnalysis }) {
   const trends = Array.isArray(data.trends) ? data.trends : []
   if (!trends.length)
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <div className="text-5xl mb-4 opacity-30">📊</div>
-        <p className="text-slate-400 text-sm font-semibold">No trend data for this niche right now.</p>
-        <p className="text-slate-600 text-xs mt-1">PyTrends may have rate-limited. Try again in a few minutes.</p>
-      </div>
-    )
+    return <EmptyState icon={TrendingUp} title="No trend data for this niche right now." sub="PyTrends may have rate-limited. Try again in a few minutes." />
 
   const rising = trends.filter((t) => t.type === 'rising').slice(0, 10)
   const top = trends.filter((t) => t.type === 'top').slice(0, 10)
   const display = rising.length ? rising : top
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
-      <Section
-        title="Rising Queries"
-        action={
-          <Badge color="#10b981">YouTube · Last 7 Days</Badge>
-        }
-      >
+    <motion.div {...tabFade} className="space-y-4">
+      <Section title="Rising Queries" action={<Badge color={palette.signal}>YouTube · 7 days</Badge>}>
         <PlotComponent
           data={[
             {
               x: display.map((t) => t.query),
               y: display.map((t) => (t.value === 9999 ? 500 : t.value)),
               type: 'bar',
-              marker: {
-                color: display.map((t) =>
-                  t.value >= 500 ? '#10b981' : '#7c3aed',
-                ),
-                opacity: 0.85,
-              },
+              marker: { color: display.map((t) => (t.value >= 500 ? palette.signal : palette.cyan)) },
               hovertemplate: '<b>%{x}</b><br>Score: %{y}<extra></extra>',
             },
           ]}
           layout={{
             ...sharedLayout,
-            margin: { t: 8, r: 10, b: 80, l: 50 },
+            margin: { t: 8, r: 10, b: 80, l: 48 },
             height: 260,
             xaxis: { ...sharedLayout.xaxis, tickangle: -40, tickfont: { size: 10 } },
             yaxis: { ...sharedLayout.yaxis, title: { text: 'Score', font: { size: 10 } } },
           }}
-          config={{ displayModeBar: false, responsive: true }}
+          config={plotlyConfig}
           style={{ width: '100%' }}
         />
       </Section>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {display.slice(0, 8).map((t, i) => {
           const hot = t.value >= 500 || t.value === 9999
+          const color = hot ? palette.signal : palette.cyan
           return (
             <motion.div
               key={`${t.query}-${i}`}
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.05 }}
-              className={`rounded-2xl p-4 border text-center ${
-                hot
-                  ? 'border-emerald-800/40 bg-emerald-950/20'
-                  : 'border-violet-800/20 bg-violet-950/10'
-              }`}
+              className="rounded-2xl border p-4 text-center"
+              style={{ borderColor: color + '33', background: color + '0c' }}
             >
-              <div
-                className={`text-2xl font-black mb-1 ${hot ? 'text-emerald-400' : 'text-violet-400'}`}
-              >
-                {t.value === 9999 ? '🔥' : `+${t.value}`}
+              <div className="flex items-center justify-center gap-1 font-mono text-2xl font-bold" style={{ color }}>
+                {t.value === 9999 ? <Flame size={22} /> : `+${t.value}`}
               </div>
-              <div className="text-[11px] text-slate-400 truncate font-semibold">{t.query}</div>
-              <div className={`text-[9px] mt-1 font-bold uppercase tracking-wider ${hot ? 'text-emerald-600' : 'text-violet-600'}`}>
+              <div className="mt-1 truncate text-[11px] font-semibold text-ink-mid">{t.query}</div>
+              <div className="mt-1 text-[9px] font-bold uppercase tracking-wider" style={{ color }}>
                 {hot ? 'Breakout' : 'Rising'}
               </div>
             </motion.div>
@@ -674,7 +638,7 @@ function TrendsTab({ data }: { data: FullAnalysis }) {
   )
 }
 
-// ── Report Tab ─────────────────────────────────────────────────────────────────
+// ── Report Tab ────────────────────────────────────────────────────────────────
 function ReportTab({ data }: { data: FullAnalysis }) {
   const { analysis, mermaid_diagram, handle } = data
   const [dl, setDl] = useState(false)
@@ -686,29 +650,30 @@ function ReportTab({ data }: { data: FullAnalysis }) {
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
       const a = document.createElement('a')
       a.href = url
-      a.download = `reachradar_${handle.replace('@', '')}.pdf`
+      a.download = `yantranalytics_${bareHandle(handle)}.pdf`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-      toast.success('PDF downloaded!')
+      toast.success('PDF downloaded')
     } catch {
-      toast.error('PDF export failed. Install: pip install reportlab')
+      toast.error('PDF export failed. Backend needs: pip install reportlab')
     } finally {
       setDl(false)
     }
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+    <motion.div {...tabFade} className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">AI Intelligence Report</h2>
+        <h2 className="text-[10px] font-bold uppercase tracking-[0.15em] text-ink-low">AI Intelligence Report</h2>
         <button
           onClick={doExport}
           disabled={dl}
-          className="flex items-center gap-2 bg-violet-700 hover:bg-violet-600 disabled:opacity-40 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all hover:shadow-[0_0_24px_rgba(124,58,237,0.4)] active:scale-95"
+          className="inline-flex items-center gap-2 rounded-xl bg-signal/90 px-5 py-2.5 text-xs font-bold text-[#06120d] transition-all hover:bg-signal active:scale-95 disabled:opacity-40"
         >
-          {dl ? '⏳' : '📥'} {dl ? 'Generating…' : 'Export PDF'}
+          {dl ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+          {dl ? 'Generating…' : 'Export PDF'}
         </button>
       </div>
 
@@ -727,7 +692,15 @@ function ReportTab({ data }: { data: FullAnalysis }) {
   )
 }
 
-// ── Tools Tab ──────────────────────────────────────────────────────────────────
+// ── Tools Tab ─────────────────────────────────────────────────────────────────
+const HOOK_COLORS: Record<string, string> = {
+  'Curiosity Gap': palette.violet,
+  'Numbered List': palette.cyan,
+  'How-To': palette.signal,
+  Controversy: palette.rose,
+  Story: palette.amber,
+}
+
 function ToolsTab({ data }: { data: FullAnalysis }) {
   const { analysis, handle } = data
   const [idea, setIdea] = useState('')
@@ -752,14 +725,9 @@ function ToolsTab({ data }: { data: FullAnalysis }) {
   const doCalendar = async () => {
     setCLoading(true)
     try {
-      const r = await generateCalendar(
-        handle,
-        analysis.niche,
-        analysis.content_pillars || [],
-        analysis.top_keywords || [],
-      )
+      const r = await generateCalendar(handle, analysis.niche, analysis.content_pillars || [], analysis.top_keywords || [])
       setCalendar(r.data.calendar || [])
-      toast.success('30-day calendar ready!')
+      toast.success('30-day calendar ready')
     } catch {
       toast.error('Calendar generation failed')
     } finally {
@@ -767,139 +735,115 @@ function ToolsTab({ data }: { data: FullAnalysis }) {
     }
   }
 
-  const HOOKS: Record<string, string> = {
-    'Curiosity Gap': 'text-purple-300 bg-purple-950/40 border-purple-800/40',
-    'Numbered List': 'text-blue-300 bg-blue-950/40 border-blue-800/40',
-    'How-To': 'text-teal-300 bg-teal-950/40 border-teal-800/40',
-    Controversy: 'text-red-300 bg-red-950/40 border-red-800/40',
-    Story: 'text-amber-300 bg-amber-950/40 border-amber-800/40',
-  }
-
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-5">
+    <motion.div {...tabFade} className="space-y-5">
       {/* A/B Title Tester */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm p-5 sm:p-6">
-        <div className="mb-4">
-          <h2 className="text-sm font-black text-white mb-1">🔤 A/B Title Tester</h2>
-          <p className="text-xs text-slate-500">5 AI-ranked titles with CTR scores and hook analysis</p>
+      <div className="rounded-2xl border border-[var(--color-border)] bg-white/[0.02] p-5 backdrop-blur-sm sm:p-6">
+        <div className="mb-4 flex items-center gap-3">
+          <Type size={18} className="text-cyan" />
+          <div>
+            <h2 className="text-sm font-bold text-ink">A/B Title Tester</h2>
+            <p className="text-xs text-ink-low">5 AI-ranked titles with CTR scores and hook analysis</p>
+          </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <input
             value={idea}
             onChange={(e) => setIdea(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && doTitles()}
             placeholder={`e.g. Top mistakes beginner ${analysis.niche} creators make`}
-            className="flex-1 bg-slate-950 border border-slate-700 focus:border-violet-500 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-700 outline-none transition-colors"
+            aria-label="Video idea"
+            className="flex-1 rounded-xl border border-[var(--color-border-strong)] bg-black/30 px-4 py-3 text-sm text-ink outline-none transition-colors placeholder:text-ink-faint focus:border-signal/60"
           />
           <button
             onClick={doTitles}
             disabled={tLoading || !idea.trim()}
-            className="flex-shrink-0 bg-violet-700 hover:bg-violet-600 disabled:opacity-40 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all hover:shadow-[0_0_20px_rgba(124,58,237,0.3)] active:scale-95 whitespace-nowrap"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-signal/90 px-6 py-3 text-sm font-bold text-[#06120d] transition-all hover:bg-signal active:scale-95 disabled:opacity-40"
           >
-            {tLoading ? '⏳ Working…' : 'Generate Titles'}
+            {tLoading ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
+            {tLoading ? 'Working…' : 'Generate'}
           </button>
         </div>
 
         {titles.length > 0 && (
           <div className="mt-5 space-y-3">
-            {titles.map((t, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -12 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.07 }}
-                className={`rounded-xl p-4 border ${
-                  i === 0
-                    ? 'border-violet-600/50 bg-violet-950/20'
-                    : 'border-slate-800 bg-slate-950/60'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <p className="font-bold text-white text-sm flex-1 leading-snug">{t.title}</p>
-                  <div className="text-center flex-shrink-0 w-12">
-                    <div
-                      className={`text-xl font-black tabular-nums ${
-                        t.ctr_score >= 70
-                          ? 'text-emerald-400'
-                          : t.ctr_score >= 50
-                          ? 'text-amber-400'
-                          : 'text-slate-500'
-                      }`}
-                    >
-                      {t.ctr_score}
+            {titles.map((t, i) => {
+              const hookColor = HOOK_COLORS[t.hook_type] || palette.cyan
+              const ctr = t.ctr_score >= 70 ? palette.signal : t.ctr_score >= 50 ? palette.amber : palette.textLow
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.07 }}
+                  className="rounded-xl border p-4"
+                  style={{ borderColor: i === 0 ? palette.signal + '55' : 'var(--color-border)', background: i === 0 ? palette.signal + '0c' : 'rgba(0,0,0,0.2)' }}
+                >
+                  <div className="mb-2 flex items-start justify-between gap-3">
+                    <p className="flex-1 text-sm font-bold leading-snug text-ink">{t.title}</p>
+                    <div className="w-12 shrink-0 text-center">
+                      <div className="font-mono text-xl font-bold tabular" style={{ color: ctr }}>{t.ctr_score}</div>
+                      <div className="text-[9px] font-bold uppercase text-ink-faint">CTR</div>
                     </div>
-                    <div className="text-[9px] text-slate-600 font-bold uppercase">CTR</div>
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  <span
-                    className={`text-[10px] px-2 py-0.5 rounded-full border font-bold ${
-                      HOOKS[t.hook_type] || 'text-slate-400 bg-slate-800 border-slate-700'
-                    }`}
-                  >
-                    {t.hook_type}
-                  </span>
-                  {(t.seo_keywords_used || []).map((kw) => (
-                    <span
-                      key={kw}
-                      className="text-[10px] px-2 py-0.5 bg-slate-800/60 text-slate-500 rounded-full border border-slate-700"
-                    >
-                      {kw}
+                  <div className="mb-2 flex flex-wrap gap-1.5">
+                    <span className="rounded-full border px-2 py-0.5 text-[10px] font-bold" style={{ color: hookColor, background: hookColor + '18', borderColor: hookColor + '40' }}>
+                      {t.hook_type}
                     </span>
-                  ))}
-                </div>
-                <p className="text-xs text-slate-500 italic leading-relaxed">"{t.why_it_works}"</p>
-              </motion.div>
-            ))}
+                    {(t.seo_keywords_used || []).map((kw) => (
+                      <span key={kw} className="rounded-full border border-[var(--color-border)] bg-white/[0.03] px-2 py-0.5 font-mono text-[10px] text-ink-low">
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs italic leading-relaxed text-ink-mid">“{t.why_it_works}”</p>
+                </motion.div>
+              )
+            })}
           </div>
         )}
       </div>
 
       {/* Content Calendar */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm p-5 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
-          <div>
-            <h2 className="text-sm font-black text-white">📅 30-Day Content Calendar</h2>
-            <p className="text-xs text-slate-500 mt-0.5">AI schedule built from competitor patterns and niche trends</p>
+      <div className="rounded-2xl border border-[var(--color-border)] bg-white/[0.02] p-5 backdrop-blur-sm sm:p-6">
+        <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-3">
+            <CalendarDays size={18} className="text-blue" />
+            <div>
+              <h2 className="text-sm font-bold text-ink">30-Day Content Calendar</h2>
+              <p className="mt-0.5 text-xs text-ink-low">AI schedule built from competitor patterns and niche trends</p>
+            </div>
           </div>
           <button
             onClick={doCalendar}
             disabled={cLoading}
-            className="flex-shrink-0 bg-emerald-700/70 hover:bg-emerald-600 disabled:opacity-40 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 whitespace-nowrap"
+            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-signal/40 bg-signal/10 px-5 py-2.5 text-xs font-bold text-signal transition-all hover:bg-signal/20 active:scale-95 disabled:opacity-40"
           >
-            {cLoading ? '⏳ Building…' : '✨ Generate Calendar'}
+            {cLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+            {cLoading ? 'Building…' : 'Generate calendar'}
           </button>
         </div>
 
         {calendar.length > 0 && (
-          <div className="max-h-[560px] overflow-y-auto space-y-2 pr-1">
+          <div className="no-scrollbar max-h-[560px] space-y-2 overflow-y-auto pr-1">
             {calendar.map((e) => {
-              const isS = e.format?.includes('Short')
-              const isC = e.format?.includes('Community')
-              const accent = isS ? '#f59e0b' : isC ? '#10b981' : '#7c3aed'
+              const isShort = e.format?.includes('Short')
+              const isComm = e.format?.includes('Community')
+              const accent = isShort ? palette.amber : isComm ? palette.cyan : palette.signal
               return (
-                <div
-                  key={e.day}
-                  className="flex gap-3 rounded-xl p-3.5 border border-slate-800 bg-slate-950/40 hover:bg-slate-900/60 transition-colors"
-                >
-                  <div className="flex-shrink-0 w-12 text-center">
-                    <div className="text-xl font-black text-white leading-none tabular-nums">{e.day}</div>
-                    <div className="text-[9px] text-slate-600 font-bold uppercase">Day</div>
+                <div key={e.day} className="flex gap-3 rounded-xl border border-[var(--color-border)] bg-black/20 p-3.5 transition-colors hover:bg-white/[0.03]">
+                  <div className="w-12 shrink-0 text-center">
+                    <div className="font-mono text-xl font-bold leading-none tabular text-ink">{e.day}</div>
+                    <div className="text-[9px] font-bold uppercase text-ink-faint">Day</div>
                   </div>
-                  <div
-                    className="w-px flex-shrink-0 rounded-full"
-                    style={{ background: accent + '40' }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <span
-                      className="text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-wider inline-block mb-1"
-                      style={{ color: accent, background: accent + '18' }}
-                    >
+                  <div className="w-px shrink-0 rounded-full" style={{ background: accent + '40' }} />
+                  <div className="min-w-0 flex-1">
+                    <span className="mb-1 inline-block rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ color: accent, background: accent + '18' }}>
                       {e.format}
                     </span>
-                    <p className="text-sm font-bold text-white leading-snug">{e.title}</p>
-                    <p className="text-xs text-slate-500 mt-0.5 italic">"{e.hook}"</p>
-                    <p className="text-[11px] text-slate-600 mt-0.5">{e.rationale}</p>
+                    <p className="text-sm font-bold leading-snug text-ink">{e.title}</p>
+                    <p className="mt-0.5 text-xs italic text-ink-mid">“{e.hook}”</p>
+                    <p className="mt-0.5 text-[11px] text-ink-low">{e.rationale}</p>
                   </div>
                 </div>
               )
@@ -911,63 +855,56 @@ function ToolsTab({ data }: { data: FullAnalysis }) {
   )
 }
 
-// ── Markdown Styles ────────────────────────────────────────────────────────────
+// ── Empty State helper ──────────────────────────────────────────────────────
+function EmptyState({ icon: Icon, title, sub }: { icon: LucideIcon; title: string; sub: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-24 text-center">
+      <Icon size={40} className="mb-4 text-ink-faint" />
+      <p className="text-sm font-semibold text-ink-mid">{title}</p>
+      <p className="mt-1 max-w-xs text-xs text-ink-low">{sub}</p>
+    </div>
+  )
+}
+
+// ── Markdown Styles ───────────────────────────────────────────────────────────
 const mdComponents = {
   h1: ({ children }: { children?: React.ReactNode }) => (
-    <h1 className="text-2xl font-black text-white mb-5 mt-8 first:mt-0 tracking-tight">{children}</h1>
+    <h1 className="mb-5 mt-8 font-display text-2xl text-ink first:mt-0">{children}</h1>
   ),
   h2: ({ children }: { children?: React.ReactNode }) => (
-    <h2 className="text-sm font-black text-violet-300 mt-8 mb-3 pb-2 border-b border-slate-800 uppercase tracking-wider">
-      {children}
-    </h2>
+    <h2 className="mb-3 mt-8 border-b border-[var(--color-border)] pb-2 text-sm font-bold uppercase tracking-wider text-signal">{children}</h2>
   ),
-  h3: ({ children }: { children?: React.ReactNode }) => (
-    <h3 className="text-sm font-bold text-cyan-300 mt-5 mb-2">{children}</h3>
-  ),
-  p: ({ children }: { children?: React.ReactNode }) => (
-    <p className="text-slate-300 text-sm leading-7 mb-4">{children}</p>
-  ),
-  ul: ({ children }: { children?: React.ReactNode }) => (
-    <ul className="space-y-2 mb-4">{children}</ul>
-  ),
+  h3: ({ children }: { children?: React.ReactNode }) => <h3 className="mb-2 mt-5 text-sm font-bold text-cyan">{children}</h3>,
+  p: ({ children }: { children?: React.ReactNode }) => <p className="mb-4 text-sm leading-7 text-ink-mid">{children}</p>,
+  ul: ({ children }: { children?: React.ReactNode }) => <ul className="mb-4 space-y-2">{children}</ul>,
   li: ({ children }: { children?: React.ReactNode }) => (
-    <li className="flex items-start gap-2.5 text-slate-400 text-sm">
-      <span className="text-violet-500 mt-1.5 flex-shrink-0 text-[8px]">◆</span>
+    <li className="flex items-start gap-2.5 text-sm text-ink-mid">
+      <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-signal" />
       <span>{children}</span>
     </li>
   ),
-  strong: ({ children }: { children?: React.ReactNode }) => (
-    <strong className="text-white font-bold">{children}</strong>
-  ),
+  strong: ({ children }: { children?: React.ReactNode }) => <strong className="font-bold text-ink">{children}</strong>,
   code: ({ children }: { children?: React.ReactNode }) => (
-    <code className="bg-slate-800 border border-slate-700 px-1.5 py-0.5 rounded text-emerald-400 text-xs font-mono">
-      {children}
-    </code>
+    <code className="rounded border border-[var(--color-border)] bg-black/40 px-1.5 py-0.5 font-mono text-xs text-signal">{children}</code>
   ),
   blockquote: ({ children }: { children?: React.ReactNode }) => (
-    <blockquote className="border-l-2 border-violet-600 pl-4 my-4 italic text-slate-500 bg-violet-950/10 py-2 rounded-r-lg">
-      {children}
-    </blockquote>
+    <blockquote className="my-4 rounded-r-lg border-l-2 border-signal bg-signal/[0.06] py-2 pl-4 italic text-ink-mid">{children}</blockquote>
   ),
   table: ({ children }: { children?: React.ReactNode }) => (
-    <div className="overflow-x-auto my-5 rounded-xl border border-slate-800">
-      <table className="w-full text-sm border-collapse">{children}</table>
+    <div className="my-5 overflow-x-auto rounded-xl border border-[var(--color-border)]">
+      <table className="w-full border-collapse text-sm">{children}</table>
     </div>
   ),
   th: ({ children }: { children?: React.ReactNode }) => (
-    <th className="text-left p-3 bg-slate-800/60 text-slate-200 font-bold text-[10px] uppercase tracking-widest border-b border-slate-800">
-      {children}
-    </th>
+    <th className="border-b border-[var(--color-border)] bg-white/[0.04] p-3 text-left text-[10px] font-bold uppercase tracking-widest text-ink">{children}</th>
   ),
-  td: ({ children }: { children?: React.ReactNode }) => (
-    <td className="p-3 border-b border-slate-800/40 text-slate-400 text-xs">{children}</td>
-  ),
+  td: ({ children }: { children?: React.ReactNode }) => <td className="border-b border-[var(--color-border)] p-3 text-xs text-ink-mid">{children}</td>,
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function Analysis() {
   const { handle } = useParams<{ handle: string }>()
-  const fullHandle = `@${(handle || '').replace('@', '')}`
+  const fullHandle = normalizeHandle(handle || '')
   const { data, phase, error, run } = useAnalysis()
   const [activeTab, setActiveTab] = useState<Tab>('overview')
 
@@ -976,9 +913,8 @@ export default function Analysis() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handle])
 
-  if (phase === 'loading') return <LoadingWarRoom handle={fullHandle} />
+  if (phase === 'loading' || !data) return <LoadingWarRoom handle={fullHandle} />
   if (phase === 'error') return <ErrorState message={error || 'Unknown error'} />
-  if (!data) return <LoadingWarRoom handle={fullHandle} />
 
   const { profile, analysis } = data
   const stats = profile?.stats ?? {
@@ -992,135 +928,104 @@ export default function Analysis() {
     upload_frequency_days: undefined,
   }
 
-  const TABS: { id: Tab; label: string; icon: string }[] = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'competitors', label: 'Competitors', icon: '⚔️' },
-    { id: 'trends', label: 'Trends', icon: '📈' },
-    { id: 'report', label: 'AI Report', icon: '📋' },
-    { id: 'tools', label: 'Tools', icon: '🛠️' },
+  const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'competitors', label: 'Competitors', icon: Swords },
+    { id: 'trends', label: 'Trends', icon: TrendingUp },
+    { id: 'report', label: 'AI Report', icon: FileText },
+    { id: 'tools', label: 'Tools', icon: Wrench },
   ]
 
   const growthColor =
     analysis.growth_potential === 'Explosive'
-      ? '#f43f5e'
+      ? palette.amber
       : analysis.growth_potential === 'High'
-      ? '#34d399'
-      : '#fbbf24'
+      ? palette.signal
+      : analysis.growth_potential === 'Medium'
+      ? palette.cyan
+      : palette.textLow
 
   return (
-    <div className="min-h-screen bg-[#080b14] text-white">
+    <div className="grain min-h-screen bg-base text-ink">
       {/* Ambient background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div
-          className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full opacity-[0.04]"
-          style={{ background: 'radial-gradient(circle, #7c3aed, transparent)' }}
-        />
-        <div
-          className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.04]"
-          style={{ background: 'radial-gradient(circle, #3b82f6, transparent)' }}
-        />
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -left-40 -top-40 h-[600px] w-[600px] rounded-full opacity-[0.05]" style={{ background: `radial-gradient(circle, ${palette.signal}, transparent)` }} />
+        <div className="absolute -bottom-40 -right-40 h-[600px] w-[600px] rounded-full opacity-[0.05]" style={{ background: `radial-gradient(circle, ${palette.cyan}, transparent)` }} />
       </div>
 
       {/* Sticky Top Bar */}
-      <div className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#080b14]/90 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          {/* Top row */}
-          <div className="flex items-center justify-between py-3 gap-4">
-            <div className="flex items-center gap-3 min-w-0">
-              <Link
-                to="/"
-                className="text-slate-600 hover:text-white text-sm flex-shrink-0 transition-colors font-medium"
-              >
-                ← Back
+      <div className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-base/85 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex items-center justify-between gap-4 py-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <Link to="/" className="flex shrink-0 items-center gap-1.5 text-sm font-medium text-ink-low transition-colors hover:text-ink">
+                <ArrowLeft size={16} />
+                <BrandMark size={26} />
               </Link>
-              <div className="w-px h-4 bg-slate-800 flex-shrink-0" />
+              <div className="h-4 w-px shrink-0 bg-[var(--color-border-strong)]" />
               <div className="min-w-0">
-                <h1 className="text-sm font-black text-white truncate tracking-tight">{fullHandle}</h1>
-                <div className="flex items-center gap-2 flex-wrap mt-0.5">
-                  <span className="text-[10px] text-slate-500 font-medium">{analysis.niche}</span>
-                  <span className="text-slate-700">·</span>
-                  <span className="text-[10px] text-violet-400 font-semibold">{analysis.authority_type}</span>
-                  <span className="text-slate-700">·</span>
-                  <span
-                    className="text-[10px] font-bold"
-                    style={{ color: growthColor }}
-                  >
-                    {analysis.growth_potential} Growth
-                  </span>
+                <h1 className="truncate font-display text-base text-ink">{fullHandle}</h1>
+                <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-medium text-ink-mid">{analysis.niche}</span>
+                  <span className="text-ink-faint">·</span>
+                  <span className="text-[10px] font-semibold text-cyan">{analysis.authority_type}</span>
+                  <span className="text-ink-faint">·</span>
+                  <span className="text-[10px] font-bold" style={{ color: growthColor }}>{analysis.growth_potential} growth</span>
                 </div>
               </div>
             </div>
 
-            {profile.subscribers && (
-              <div className="hidden sm:flex flex-col items-end flex-shrink-0">
-                <div className="text-base font-black text-white tabular-nums leading-none">
-                  {profile.subscribers.toLocaleString()}
-                </div>
-                <div className="text-[10px] text-slate-600 font-semibold uppercase tracking-wider mt-0.5">
-                  subscribers
+            {profile.subscribers != null && (
+              <div className="hidden shrink-0 items-center gap-2 sm:flex">
+                <Users size={15} className="text-ink-low" />
+                <div className="text-right">
+                  <div className="font-mono text-base font-bold leading-none tabular text-ink">{compact(profile.subscribers)}</div>
+                  <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-ink-low">subscribers</div>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Tab Bar */}
-          <div className="flex overflow-x-auto scrollbar-none -mx-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative flex items-center gap-1.5 px-3 sm:px-4 py-3 text-xs font-bold whitespace-nowrap transition-colors flex-shrink-0 ${
-                  activeTab === tab.id ? 'text-white' : 'text-slate-500 hover:text-slate-300'
-                }`}
-              >
-                <span className="hidden sm:inline">{tab.icon}</span>
-                {tab.label}
-                {activeTab === tab.id && (
-                  <motion.div
-                    layoutId="tab-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full"
-                    style={{ background: 'linear-gradient(90deg, #7c3aed, #3b82f6)' }}
-                  />
-                )}
-              </button>
-            ))}
+          {/* Tabs */}
+          <div className="no-scrollbar -mx-1 flex overflow-x-auto" role="tablist">
+            {TABS.map((tab) => {
+              const Icon = tab.icon
+              const active = activeTab === tab.id
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative flex shrink-0 items-center gap-1.5 whitespace-nowrap px-3 py-3 text-xs font-bold transition-colors sm:px-4 ${
+                    active ? 'text-ink' : 'text-ink-low hover:text-ink-mid'
+                  }`}
+                >
+                  <Icon size={15} className="hidden sm:inline" />
+                  {tab.label}
+                  {active && (
+                    <motion.div
+                      layoutId="tab-indicator"
+                      className="absolute inset-x-0 bottom-0 h-0.5 rounded-t-full"
+                      style={{ background: `linear-gradient(90deg, ${palette.signal}, ${palette.cyan})` }}
+                    />
+                  )}
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-5 pb-20">
-        {/* Metric Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-          <MetricCard
-            label="Viral Score"
-            value={`${analysis.viral_probability_score ?? 0}/100`}
-            icon="🎯"
-            accent="#7c3aed"
-          />
-          <MetricCard
-            label="Hook Score"
-            value={`${analysis.hook_score ?? 0}/100`}
-            icon="🪝"
-            accent="#f59e0b"
-          />
-          <MetricCard
-            label="Avg Views"
-            value={(stats.avg_views_videos || 0).toLocaleString()}
-            sub="per video"
-            icon="👁️"
-            accent="#0ea5e9"
-          />
-          <MetricCard
-            label="Engagement"
-            value={`${stats.engagement_rate ?? 0}%`}
-            sub={stats.dominant_format || ''}
-            icon="💬"
-            accent="#10b981"
-          />
+      {/* Main */}
+      <div className="relative mx-auto max-w-7xl px-4 pb-20 pt-5 sm:px-6">
+        <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <MetricCard label="Viral Score" value={`${analysis.viral_probability_score ?? 0}/100`} icon={Target} accent={palette.signal} />
+          <MetricCard label="Hook Score" value={`${analysis.hook_score ?? 0}/100`} icon={Anchor} accent={palette.amber} />
+          <MetricCard label="Avg Views" value={compact(stats.avg_views_videos)} sub="per video" icon={Eye} accent={palette.cyan} />
+          <MetricCard label="Engagement" value={`${stats.engagement_rate ?? 0}%`} sub={stats.dominant_format || ''} icon={MessageCircle} accent={palette.blue} />
         </div>
 
-        {/* Tab Content */}
         <AnimatePresence mode="wait">
           {activeTab === 'overview' && <OverviewTab key="overview" data={data} />}
           {activeTab === 'competitors' && <CompetitorsTab key="competitors" data={data} />}

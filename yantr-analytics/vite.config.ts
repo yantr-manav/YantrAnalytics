@@ -11,10 +11,14 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-      },
+      // FastAPI backend — both the /api routers and the root /health check.
+      '/api': { target: 'http://localhost:8000', changeOrigin: true },
+      '/health': { target: 'http://localhost:8000', changeOrigin: true },
     },
+  },
+  build: {
+    // Split the heavy 3D + charting libs into their own chunks so the initial
+    // landing payload stays lean.
+    chunkSizeWarningLimit: 1200,
   },
 })

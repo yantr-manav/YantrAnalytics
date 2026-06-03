@@ -1,25 +1,44 @@
 @import "tailwindcss";
 
-/* ── Root Design Tokens ─────────────────────────────────────────────────────── */
-:root {
-  --bg-deep: #0d1117;
-  --bg-surface: #161b22;
-  --bg-surface-hover: #1f2937;
-  --border: #21262d;
-  --border-hover: #3b82f6;
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
-  --accent: #3b82f6;
-  --accent-glow: rgba(59, 130, 246, 0.3);
-  --accent-amber: #f59e0b;
-  --accent-teal: #14b8a6;
-  --accent-purple: #a855f7;
-  --accent-green: #10b981;
-  --accent-red: #ef4444;
+/* ═══════════════════════════════════════════════════════════════════════════
+   YantrAnalytics — Design System
+   Aesthetic: "Yantra" precision instrument / observatory.
+   Obsidian canvas · luminous mint→cyan signal · amber heat · characterful type.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme {
+  /* Typography — distinctive, not the usual Inter/Roboto */
+  --font-display: "Bricolage Grotesque", "Hanken Grotesk", system-ui, sans-serif;
+  --font-sans: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* Surfaces */
+  --color-base: #07080c;
+  --color-elevated: #0c0e15;
+  --color-surface: #11141d;
+  --color-surface-hover: #161a25;
+
+  /* Signal accents */
+  --color-signal: #3ce0a0;
+  --color-signal-deep: #1fb583;
+  --color-cyan: #34d3ee;
+  --color-amber: #f6b352;
+  --color-violet: #8b7bf0;
+  --color-rose: #fb6f7d;
+  --color-blue: #5b9dff;
+
+  /* Ink */
+  --color-ink: #f3f6fb;
+  --color-ink-mid: #9aa4b5;
+  --color-ink-low: #5d6678;
+  --color-ink-faint: #3a4150;
+
+  /* Motion easings */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ── Base Styles ────────────────────────────────────────────────────────────── */
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -27,117 +46,211 @@
 }
 
 html {
-  font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--bg-deep);
-  color: var(--text-primary);
+  font-family: var(--font-sans);
+  background: var(--color-base);
+  color: var(--color-ink);
   min-height: 100vh;
+  font-feature-settings: "ss01", "cv01";
 }
 
 #root {
   min-height: 100vh;
+  isolation: isolate;
 }
 
-/* ── Custom Scrollbar ───────────────────────────────────────────────────────── */
+::selection {
+  background: color-mix(in oklab, var(--color-signal) 30%, transparent);
+  color: var(--color-ink);
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-surface);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #374151;
-  border-radius: 3px;
+  background: #232838;
+  border-radius: 99px;
+  border: 2px solid var(--color-base);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: #323a52;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* ── Glassmorphism Card ─────────────────────────────────────────────────────── */
-.glass-card {
-  background: rgba(22, 27, 34, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+/* ── Typography helpers ───────────────────────────────────────────────────── */
+.font-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.font-mono {
+  font-family: var(--font-mono);
+  font-feature-settings: "tnum";
+}
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+.text-balance {
+  text-wrap: balance;
 }
 
-/* ── Gradient Utilities ──────────────────────────────────────────────────────── */
+/* ── Brand gradient text ──────────────────────────────────────────────────── */
 .gradient-text {
-  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #34d399 100%);
+  background: linear-gradient(120deg, var(--color-signal) 0%, var(--color-cyan) 55%, var(--color-blue) 100%);
+  background-size: 200% 200%;
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: gradient-pan 7s ease infinite;
 }
 
-.gradient-border {
+/* ── Glass surfaces ───────────────────────────────────────────────────────── */
+.glass-panel {
+  background: color-mix(in oklab, var(--color-surface) 72%, transparent);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--color-border, rgba(255, 255, 255, 0.07));
+  border-radius: 18px;
+}
+
+/* Hairline border token usable via arbitrary values */
+:root {
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-border-strong: rgba(255, 255, 255, 0.12);
+}
+
+/* ── 3D-style icon tile ───────────────────────────────────────────────────────
+   A glassy, depth-shaded squircle that reads as a rendered app icon.
+   Drive the hue with `--tile` (any color). */
+.icon-tile {
   position: relative;
-  background: var(--bg-surface);
-  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 30%;
+  background:
+    linear-gradient(155deg,
+      color-mix(in oklab, var(--tile, #3ce0a0) 38%, #0c0e15) 0%,
+      color-mix(in oklab, var(--tile, #3ce0a0) 14%, #0c0e15) 55%,
+      #0a0c12 100%);
+  border: 1px solid color-mix(in oklab, var(--tile, #3ce0a0) 35%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--tile, #3ce0a0) 55%, transparent),
+    inset 0 -8px 18px color-mix(in oklab, #000 55%, transparent),
+    0 10px 24px -8px color-mix(in oklab, var(--tile, #3ce0a0) 45%, transparent);
+  color: color-mix(in oklab, var(--tile, #3ce0a0) 88%, white);
+  transition: transform 0.4s var(--ease-spring), box-shadow 0.4s var(--ease-out-expo);
 }
-.gradient-border::before {
-  content: '';
+.icon-tile::after {
+  /* top-edge specular highlight */
+  content: "";
   position: absolute;
-  inset: -1px;
-  border-radius: 13px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #14b8a6);
-  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 42%);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.group:hover .icon-tile {
+  transform: translateY(-2px) rotate(-3deg) scale(1.05);
 }
 
-/* ── Glow Effects ───────────────────────────────────────────────────────────── */
-.glow-blue {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-}
-.glow-amber {
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
-}
-
-/* ── Animated Pulse Ring ──────────────────────────────────────────────────────── */
-@keyframes ping-slow {
-  0% { transform: scale(1); opacity: 1; }
-  75%, 100% { transform: scale(1.5); opacity: 0; }
-}
-.animate-ping-slow {
-  animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+/* ── Focus ring (accessibility) ───────────────────────────────────────────── */
+:where(a, button, input, [tabindex]):focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-signal) 80%, transparent);
+  outline-offset: 2px;
+  border-radius: 8px;
 }
 
-/* ── Plotly Override ─────────────────────────────────────────────────────────── */
+/* ── Atmosphere: grain + grid ─────────────────────────────────────────────── */
+.grain::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 40%, transparent 100%);
+}
+
+/* ── Plotly / Mermaid integration ─────────────────────────────────────────── */
 .js-plotly-plot .plotly .modebar {
   display: none !important;
 }
-
-/* ── Mermaid Override ───────────────────────────────────────────────────────── */
-.mermaid svg {
+.mermaid svg,
+[data-mermaid] svg {
   background: transparent !important;
   max-width: 100%;
+  height: auto;
 }
 
-/* ── Tag Pill ───────────────────────────────────────────────────────────────── */
-.tag-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  border: 1px solid;
-  transition: all 0.2s ease;
-}
-.tag-pill:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+/* ── Skeleton shimmer ─────────────────────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
 }
 
-/* ── Score Gauge Animation ──────────────────────────────────────────────────── */
-@keyframes score-fill {
-  from { stroke-dasharray: 0 283; }
+/* ── Keyframes ────────────────────────────────────────────────────────────── */
+@keyframes gradient-pan {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
-.score-arc {
-  animation: score-fill 1.2s ease-out forwards;
-  animation-delay: 0.3s;
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.75; }
+}
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+@keyframes shimmer {
+  to { background-position: -200% 0; }
+}
+@keyframes scanline {
+  0% { transform: translateY(-120%); }
+  100% { transform: translateY(100vh); }
+}
+
+.animate-float { animation: float-y 5s ease-in-out infinite; }
+.animate-spin-slow { animation: spin-slow 16s linear infinite; }
+
+/* ── Reduced motion ───────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

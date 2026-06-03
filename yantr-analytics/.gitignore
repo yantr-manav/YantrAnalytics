@@ -26,3 +26,4 @@ dist-ssr
 .env.example
 .analytics-env/
 .venv/
+

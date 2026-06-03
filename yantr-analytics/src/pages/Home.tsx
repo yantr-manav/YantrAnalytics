@@ -1,976 +1,380 @@
-// // import { useState, useEffect } from 'react'
-// // import { useNavigate } from 'react-router-dom'
-// // import { motion } from 'framer-motion'
-
-// // const FEATURES = [
-// //   { icon: '🎯', label: 'Viral Score', desc: 'AI-computed virality probability 0–100' },
-// //   { icon: '🔍', label: 'Competitor Intel', desc: 'Benchmark against top 5 rivals in your niche' },
-// //   { icon: '📈', label: 'Trend Radar', desc: 'Rising YouTube search trends in real-time' },
-// //   { icon: '🧠', label: 'Hook Analysis', desc: 'First-30s transcript scoring via AI' },
-// //   { icon: '📅', label: 'Content Calendar', desc: '30-day AI-generated publishing schedule' },
-// //   { icon: '🔤', label: 'A/B Titles', desc: '5 title variations ranked by CTR score' },
-// // ]
-
-// // const STATS = [
-// //   { value: '0$', label: 'Data Pipeline Cost' },
-// //   { value: '3', label: 'AI Calls per Analysis' },
-// //   { value: '60s', label: 'Avg. Report Time' },
-// //   { value: '100%', label: 'Public Data Only' },
-// // ]
-
-// // const EXAMPLE_HANDLES = ['@MrBeast', '@mkbhd', '@veritasium', '@kurzgesagt']
-
-// // export default function Home() {
-// //   const [handle, setHandle] = useState('')
-// //   const [focused, setFocused] = useState(false)
-// //   const [exampleIndex, setExampleIndex] = useState(0)
-// //   const navigate = useNavigate()
-
-// //   useEffect(() => {
-// //     const id = setInterval(() => {
-// //       setExampleIndex(i => (i + 1) % EXAMPLE_HANDLES.length)
-// //     }, 2000)
-// //     return () => clearInterval(id)
-// //   }, [])
-
-// //   const handleSubmit = () => {
-// //     const clean = handle.trim().replace(/^@/, '')
-// //     if (clean.length >= 3) {
-// //       navigate(`/analyze/${clean}`)
-// //     }
-// //   }
-
-// //   const isValid = handle.trim().replace(/^@/, '').length >= 3
-
-// //   return (
-// //     <div className="min-h-screen bg-[#0d1117] relative overflow-hidden">
-// //       {/* Ambient Glow Background */}
-// //       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-// //         <div className="absolute top-[-20%] left-[10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-3xl" />
-// //         <div className="absolute bottom-[-10%] right-[5%] w-[500px] h-[500px] bg-purple-600/8 rounded-full blur-3xl" />
-// //         <div className="absolute top-[40%] right-[30%] w-[300px] h-[300px] bg-teal-600/6 rounded-full blur-3xl" />
-// //       </div>
-
-// //       {/* Navbar */}
-// //       <nav className="relative z-10 flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
-// //         <div className="flex items-center gap-2">
-// //           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-sm">R</div>
-// //           <span className="font-bold text-white">ReachRadar</span>
-// //           <span className="text-[10px] bg-blue-900/40 text-blue-400 border border-blue-800 px-2 py-0.5 rounded-full ml-1">Ultra</span>
-// //         </div>
-// //         <div className="flex items-center gap-4 text-sm text-gray-400">
-// //           <a href="/docs" target="_blank" className="hover:text-white transition-colors hidden sm:block">API Docs</a>
-// //           <a href="https://github.com" target="_blank" className="hover:text-white transition-colors hidden sm:block">GitHub</a>
-// //         </div>
-// //       </nav>
-
-// //       {/* Hero Section */}
-// //       <main className="relative z-10 flex flex-col items-center justify-center text-center px-6 pt-16 pb-20">
-// //         <motion.div
-// //           initial={{ opacity: 0, y: 40 }}
-// //           animate={{ opacity: 1, y: 0 }}
-// //           transition={{ duration: 0.7, ease: 'easeOut' }}
-// //           className="max-w-4xl"
-// //         >
-// //           {/* Badge */}
-// //           <motion.div
-// //             initial={{ opacity: 0, scale: 0.9 }}
-// //             animate={{ opacity: 1, scale: 1 }}
-// //             transition={{ delay: 0.1 }}
-// //             className="inline-flex items-center gap-2 bg-blue-950/60 border border-blue-800/50 rounded-full px-4 py-1.5 text-xs text-blue-300 mb-8"
-// //           >
-// //             <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-// //             AI-Powered · Zero Cost · Industry Grade
-// //           </motion.div>
-
-// //           {/* Headline */}
-// //           <h1 className="text-5xl sm:text-7xl font-black text-white leading-tight mb-4">
-// //             Reach<span className="text-blue-500">Radar</span>{' '}
-// //             <span className="gradient-text">Ultra</span>
-// //           </h1>
-// //           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-3">
-// //             AI Creator Intelligence Platform. Deep YouTube audit, competitor benchmarking,
-// //             trend detection & growth strategy — in under 60 seconds.
-// //           </p>
-// //           <p className="text-sm text-gray-600 mb-10">
-// //             No API keys needed. No credit card. 100% public data.
-// //           </p>
-
-// //           {/* Search Box */}
-// //           <div className="relative max-w-xl mx-auto">
-// //             <div className={`flex items-center gap-3 bg-[#161b22] border rounded-2xl px-4 py-3 transition-all duration-200 ${
-// //               focused
-// //                 ? 'border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.15)]'
-// //                 : 'border-[#21262d] hover:border-gray-600'
-// //             }`}>
-// //               <div className="flex-shrink-0 text-gray-500">
-// //                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-// //                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1116.65 16.65z" />
-// //                 </svg>
-// //               </div>
-// //               <input
-// //                 id="yt-handle-input"
-// //                 type="text"
-// //                 value={handle}
-// //                 onChange={e => setHandle(e.target.value)}
-// //                 onFocus={() => setFocused(true)}
-// //                 onBlur={() => setFocused(false)}
-// //                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-// //                 placeholder={EXAMPLE_HANDLES[exampleIndex]}
-// //                 className="flex-1 bg-transparent text-white placeholder-gray-600 outline-none text-sm"
-// //                 autoComplete="off"
-// //               />
-// //               <button
-// //                 id="analyze-btn"
-// //                 onClick={handleSubmit}
-// //                 disabled={!isValid}
-// //                 className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white px-5 py-2 rounded-xl font-semibold text-sm transition-all duration-150 flex-shrink-0 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]"
-// //               >
-// //                 Analyze
-// //               </button>
-// //             </div>
-// //             <p className="text-xs text-gray-600 mt-2">
-// //               Enter a YouTube handle like <code className="text-gray-500 bg-gray-800 px-1 rounded">@channelname</code>
-// //             </p>
-// //           </div>
-
-// //           {/* Quick Examples */}
-// //           <div className="flex flex-wrap justify-center gap-2 mt-5">
-// //             {EXAMPLE_HANDLES.map(h => (
-// //               <button
-// //                 key={h}
-// //                 onClick={() => { setHandle(h); setTimeout(handleSubmit, 50) }}
-// //                 className="text-xs px-3 py-1.5 bg-gray-900 hover:bg-gray-800 border border-[#21262d] hover:border-gray-600 text-gray-400 hover:text-white rounded-full transition-all"
-// //               >
-// //                 {h}
-// //               </button>
-// //             ))}
-// //           </div>
-// //         </motion.div>
-
-// //         {/* Stats Row */}
-// //         <motion.div
-// //           initial={{ opacity: 0, y: 20 }}
-// //           animate={{ opacity: 1, y: 0 }}
-// //           transition={{ delay: 0.4, duration: 0.6 }}
-// //           className="flex flex-wrap justify-center gap-8 mt-16 mb-20"
-// //         >
-// //           {STATS.map(s => (
-// //             <div key={s.label} className="text-center">
-// //               <div className="text-2xl font-black text-blue-400">{s.value}</div>
-// //               <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
-// //             </div>
-// //           ))}
-// //         </motion.div>
-
-// //         {/* Feature Grid */}
-// //         <motion.div
-// //           initial={{ opacity: 0, y: 30 }}
-// //           animate={{ opacity: 1, y: 0 }}
-// //           transition={{ delay: 0.6, duration: 0.6 }}
-// //           className="grid grid-cols-2 sm:grid-cols-3 gap-4 max-w-3xl w-full"
-// //         >
-// //           {FEATURES.map((f, i) => (
-// //             <motion.div
-// //               key={f.label}
-// //               initial={{ opacity: 0, y: 20 }}
-// //               animate={{ opacity: 1, y: 0 }}
-// //               transition={{ delay: 0.7 + i * 0.08 }}
-// //               className="glass-card p-5 text-left hover:border-blue-800/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)] transition-all duration-200 cursor-default"
-// //             >
-// //               <div className="text-2xl mb-2">{f.icon}</div>
-// //               <div className="text-sm font-semibold text-white mb-1">{f.label}</div>
-// //               <div className="text-xs text-gray-500">{f.desc}</div>
-// //             </motion.div>
-// //           ))}
-// //         </motion.div>
-
-// //         {/* Footer note */}
-// //         <motion.p
-// //           initial={{ opacity: 0 }}
-// //           animate={{ opacity: 1 }}
-// //           transition={{ delay: 1.2 }}
-// //           className="text-xs text-gray-700 mt-12"
-// //         >
-// //           Analyzes public YouTube data only. Built with FastAPI + Gemini AI + yt-dlp.
-// //         </motion.p>
-// //       </main>
-// //     </div>
-// //   )
-// // }
-
-
-
-// import { useState, useEffect } from 'react'
-// import { useNavigate } from 'react-router-dom'
-// import { motion, AnimatePresence } from 'framer-motion'
-
-// const FEATURES = [
-//   { icon: '🎯', label: 'Viral Score', desc: 'Neural-net powered probability engine.' },
-//   { icon: '⚔️', label: 'Competitor Intel', desc: 'Real-time benchmarking vs niche leaders.' },
-//   { icon: '📈', label: 'Trend Radar', desc: 'Capture breakout search signals early.' },
-//   { icon: '🪝', label: 'Hook Analysis', desc: 'Transcript-level retention scoring.' },
-//   { icon: '📅', label: 'AI Strategy', desc: '30-day automated publishing roadmap.' },
-//   { icon: '🔤', label: 'CTR Lab', desc: 'A/B title testing with psychological hooks.' },
-// ]
-
-// const STATS = [
-//   { value: '0$', label: 'Data Costs' },
-//   { value: 'Gen-3', label: 'AI Engine' },
-//   { value: '60s', label: 'Analysis' },
-//   { value: 'No-Key', label: 'Public Access' },
-// ]
-
-// const EXAMPLE_HANDLES = ['@MrBeast', '@MKBHD', '@Veritasium', '@Kurzgesagt']
-
-// export default function Home() {
-//   const [handle, setHandle] = useState('')
-//   const [focused, setFocused] = useState(false)
-//   const [exampleIndex, setExampleIndex] = useState(0)
-//   const navigate = useNavigate()
-
-//   useEffect(() => {
-//     const id = setInterval(() => setExampleIndex(i => (i + 1) % EXAMPLE_HANDLES.length), 2500)
-//     return () => clearInterval(id)
-//   }, [])
-
-//   const handleSubmit = () => {
-//     const clean = handle.trim().replace(/^@/, '')
-//     if (clean.length >= 2) navigate(`/analyze/${clean}`)
-//   }
-
-//   return (
-//     <div className="min-h-screen bg-[#050505] text-white selection:bg-blue-500/30 selection:text-blue-200 selection:font-bold overflow-x-hidden">
-//       {/* Dynamic Background Mesh */}
-//       <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-40">
-//         <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse" />
-//         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-purple-600/10 rounded-full blur-[120px]" />
-//         <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150" />
-//       </div>
-
-//       <nav className="relative z-50 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
-//         <div className="flex items-center gap-3">
-//           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.5)]">
-//             <span className="font-black text-xl tracking-tighter">R</span>
-//           </div>
-//           <span className="font-black text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">ReachRadar</span>
-//           <span className="text-[10px] font-bold bg-white/5 border border-white/10 px-2 py-0.5 rounded-md uppercase tracking-widest text-blue-400">Ultra 3.0</span>
-//         </div>
-//         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-//           <a href="#" className="hover:text-white transition-colors">Platform</a>
-//           <a href="#" className="hover:text-white transition-colors">Intelligence</a>
-//           <button className="bg-white/5 hover:bg-white/10 border border-white/10 px-5 py-2 rounded-full transition-all">Docs</button>
-//         </div>
-//       </nav>
-
-//       <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-32">
-//         <div className="grid lg:grid-cols-2 gap-16 items-center">
-          
-//           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }}>
-//             <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-blue-400 mb-6">
-//               <span className="relative flex h-2 w-2">
-//                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-//                 <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-//               </span>
-//               Neural Insights Live
-//             </div>
-            
-//             <h1 className="text-6xl md:text-8xl font-black leading-[0.9] tracking-tighter mb-8">
-//               UNFAIR <br />
-//               <span className="text-blue-500 italic">ADVANTAGE</span>
-//             </h1>
-            
-//             <p className="text-xl text-gray-400 max-w-lg leading-relaxed mb-10">
-//               Stop guessing. ReachRadar Ultra performs deep visual and transcript audits on any YouTube channel in seconds.
-//             </p>
-
-//             {/* Input Module */}
-//             <div className={`relative max-w-md group transition-all duration-500 ${focused ? 'scale-105' : ''}`}>
-//                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-//                <div className="relative flex items-center gap-2 bg-[#0d0d0d] border border-white/10 rounded-2xl p-2 pl-5">
-//                   <input
-//                     type="text"
-//                     value={handle}
-//                     onChange={e => setHandle(e.target.value)}
-//                     onFocus={() => setFocused(true)}
-//                     onBlur={() => setFocused(false)}
-//                     onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-//                     placeholder={EXAMPLE_HANDLES[exampleIndex]}
-//                     className="flex-1 bg-transparent text-white placeholder-gray-700 outline-none font-medium"
-//                   />
-//                   <button
-//                     onClick={handleSubmit}
-//                     className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-all active:scale-95 shadow-xl shadow-blue-900/20"
-//                   >
-//                     Analyze
-//                   </button>
-//                </div>
-//             </div>
-            
-//             <div className="mt-6 flex flex-wrap gap-3">
-//                <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest pt-2">Try:</span>
-//                {EXAMPLE_HANDLES.map(h => (
-//                  <button key={h} onClick={() => setHandle(h)} className="text-xs font-semibold px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/5 rounded-md text-gray-400 transition-all">{h}</button>
-//                ))}
-//             </div>
-//           </motion.div>
-
-//           {/* Right Column: Bento Feature Grid */}
-//           <motion.div 
-//             initial={{ opacity: 0, scale: 0.9 }} 
-//             animate={{ opacity: 1, scale: 1 }} 
-//             transition={{ duration: 0.8, delay: 0.2 }}
-//             className="grid grid-cols-2 gap-4"
-//           >
-//             {FEATURES.map((f, i) => (
-//               <div key={f.label} className={`p-6 rounded-3xl border border-white/5 bg-[#0d0d0d] hover:border-blue-500/30 transition-all group ${i === 1 || i === 4 ? 'translate-y-8' : ''}`}>
-//                 <div className="text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">{f.icon}</div>
-//                 <h3 className="font-bold text-white mb-1">{f.label}</h3>
-//                 <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
-//               </div>
-//             ))}
-//           </motion.div>
-
-//         </div>
-
-//         {/* Floating Stats */}
-//         <div className="mt-32 pt-16 border-t border-white/5 grid grid-cols-2 md:grid-cols-4 gap-8">
-//           {STATS.map(s => (
-//             <div key={s.label}>
-//               <div className="text-3xl font-black text-white">{s.value}</div>
-//               <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-500/80 mt-1">{s.label}</div>
-//             </div>
-//           ))}
-//         </div>
-//       </main>
-//     </div>
-//   )
-// }
-
-
-import { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
+import {
+  Target,
+  Crosshair,
+  Radar,
+  Anchor,
+  CalendarDays,
+  FlaskConical,
+  Search,
+  ArrowRight,
+  GitFork,
+  Sparkles,
+  DollarSign,
+  Timer,
+  Unlock,
+  BrainCircuit,
+} from 'lucide-react'
+import Logo from '../components/Logo'
+import Icon3D from '../components/Icon3D'
+import HeroScene from '../components/three/HeroScene'
+import { bareHandle } from '../lib/format'
 
 const FEATURES = [
-  {
-    icon: '🎯',
-    label: 'Viral Score',
-    desc: 'AI-computed virality probability 0–100 using engagement pattern modeling.',
-    accent: '#6366f1',
-    size: 'col-span-1',
-  },
-  {
-    icon: '⚔️',
-    label: 'Competitor Intel',
-    desc: 'Deep benchmark against your top 5 niche rivals. See exactly where you win and lose.',
-    accent: '#0ea5e9',
-    size: 'col-span-1',
-  },
-  {
-    icon: '📈',
-    label: 'Trend Radar',
-    desc: 'Rising YouTube queries before they peak.',
-    accent: '#10b981',
-    size: 'col-span-1',
-  },
-  {
-    icon: '🪝',
-    label: 'Hook Analysis',
-    desc: 'Transcript-level scoring of your first 30 seconds.',
-    accent: '#f59e0b',
-    size: 'col-span-1',
-  },
-  {
-    icon: '📅',
-    label: '30-Day Calendar',
-    desc: 'AI-built content schedule from competitor patterns and live trends.',
-    accent: '#ec4899',
-    size: 'col-span-1',
-  },
-  {
-    icon: '🔤',
-    label: 'CTR Lab',
-    desc: 'Five title variations A/B-ranked by psychological hook type and keyword density.',
-    accent: '#8b5cf6',
-    size: 'col-span-1',
-  },
+  { icon: Target, color: '#3ce0a0', label: 'Viral Score', desc: 'A 0–100 virality probability modelled from engagement patterns and format mix.' },
+  { icon: Crosshair, color: '#34d3ee', label: 'Competitor Intel', desc: 'Benchmark against the top channels in your niche — see exactly where you win and lose.' },
+  { icon: Radar, color: '#f6b352', label: 'Trend Radar', desc: 'Catch rising YouTube search queries before they peak and saturate.' },
+  { icon: Anchor, color: '#8b7bf0', label: 'Hook Analysis', desc: 'Transcript-level scoring of your opening seconds — the make-or-break retention window.' },
+  { icon: CalendarDays, color: '#5b9dff', label: '30-Day Calendar', desc: 'An AI publishing schedule built from competitor cadence and live niche trends.' },
+  { icon: FlaskConical, color: '#fb6f7d', label: 'CTR Lab', desc: 'Five title variations, A/B-ranked by psychological hook type and keyword density.' },
 ]
 
 const STATS = [
-  { value: '$0', label: 'Pipeline Cost', icon: '💸' },
-  { value: '60s', label: 'Avg Analysis', icon: '⚡' },
-  { value: '100%', label: 'Public Data', icon: '🔓' },
-  { value: 'Gen-AI', label: 'Powered By', icon: '🧠' },
+  { icon: DollarSign, value: '$0', label: 'Pipeline cost' },
+  { icon: Timer, value: '~60s', label: 'Per analysis' },
+  { icon: Unlock, value: '100%', label: 'Public data' },
+  { icon: BrainCircuit, value: 'Gemini', label: 'AI engine' },
 ]
 
-const HANDLES = ['@MrBeast', '@MKBHD', '@Veritasium', '@Kurzgesagt', '@LexFridman']
+const STEPS = [
+  { n: '01', title: 'Paste a handle', desc: 'Drop in any public YouTube @handle — no login, no API key.' },
+  { n: '02', title: 'We harvest & synthesize', desc: 'Channel data, competitors and trends are gathered in parallel, then read by AI.' },
+  { n: '03', title: 'Get the blueprint', desc: 'A full intelligence report: scores, charts, competitor gaps and a 7-day action plan.' },
+]
 
-// Animated counter
-function Counter({ to, duration = 1.5 }: { to: string; duration?: number }) {
-  return <span>{to}</span>
-}
-
-// Typewriter for placeholder
-function useTypewriter(words: string[], speed = 80, pause = 1800) {
-  const [display, setDisplay] = useState('')
-  const [wordIdx, setWordIdx] = useState(0)
-  const [charIdx, setCharIdx] = useState(0)
-  const [deleting, setDeleting] = useState(false)
-
-  useEffect(() => {
-    const word = words[wordIdx]
-    let timeout: ReturnType<typeof setTimeout>
-
-    if (!deleting && charIdx < word.length) {
-      timeout = setTimeout(() => setCharIdx((c) => c + 1), speed)
-    } else if (!deleting && charIdx === word.length) {
-      timeout = setTimeout(() => setDeleting(true), pause)
-    } else if (deleting && charIdx > 0) {
-      timeout = setTimeout(() => setCharIdx((c) => c - 1), speed / 2)
-    } else if (deleting && charIdx === 0) {
-      setDeleting(false)
-      setWordIdx((w) => (w + 1) % words.length)
-    }
-
-    setDisplay(word.slice(0, charIdx))
-    return () => clearTimeout(timeout)
-  }, [charIdx, deleting, wordIdx, words, speed, pause])
-
-  return display
-}
-
-// Orbit ring decoration
-function OrbitRing({ size, duration, delay = 0, color }: { size: number; duration: number; delay?: number; color: string }) {
-  return (
-    <div
-      className="absolute rounded-full border pointer-events-none"
-      style={{
-        width: size,
-        height: size,
-        borderColor: color + '18',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        animation: `spin ${duration}s linear infinite`,
-        animationDelay: `${delay}s`,
-      }}
-    >
-      <div
-        className="absolute w-2 h-2 rounded-full top-0 left-1/2 -translate-x-1/2 -translate-y-1/2"
-        style={{ background: color, boxShadow: `0 0 8px ${color}` }}
-      />
-    </div>
-  )
-}
+const EXAMPLES = ['MrBeast', 'mkbhd', 'veritasium', 'kurzgesagt', 'lexfridman']
+const MIN_LEN = 3
 
 export default function Home() {
   const [handle, setHandle] = useState('')
   const [focused, setFocused] = useState(false)
-  const [hoveredFeature, setHoveredFeature] = useState<number | null>(null)
+  const [touched, setTouched] = useState(false)
+  const [exampleIdx, setExampleIdx] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const navigate = useNavigate()
-  const placeholder = useTypewriter(HANDLES)
 
   const { scrollY } = useScroll()
-  const heroY = useTransform(scrollY, [0, 400], [0, -60])
-  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0.4])
+  const heroY = useTransform(scrollY, [0, 500], [0, -70])
+  const heroFade = useTransform(scrollY, [0, 380], [1, 0.35])
 
-  const handleSubmit = () => {
-    const clean = handle.trim().replace(/^@/, '')
-    if (clean.length >= 2) navigate(`/analyze/${clean}`)
+  useEffect(() => {
+    const id = setInterval(() => setExampleIdx((i) => (i + 1) % EXAMPLES.length), 2600)
+    return () => clearInterval(id)
+  }, [])
+
+  const bare = bareHandle(handle)
+  const isValid = bare.length >= MIN_LEN
+  const showError = touched && handle.length > 0 && !isValid
+
+  const submit = () => {
+    setTouched(true)
+    if (isValid) navigate(`/analyze/${bare}`)
   }
 
-  const isValid = handle.trim().replace(/^@/, '').length >= 2
-
   return (
-    <div className="min-h-screen bg-[#06060a] text-white overflow-x-hidden">
-      {/* ── Global Keyframes ── */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&display=swap');
-
-        * { font-family: 'DM Sans', sans-serif; }
-        .font-display { font-family: 'Syne', sans-serif !important; }
-
-        @keyframes spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-        @keyframes spin-reverse { from { transform: translate(-50%, -50%) rotate(360deg); } to { transform: translate(-50%, -50%) rotate(0deg); } }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } }
-        @keyframes gradient-shift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
-        @keyframes glow-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
-
-        .gradient-text {
-          background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 50%, #10b981 100%);
-          background-size: 200% 200%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          animation: gradient-shift 4s ease infinite;
-        }
-
-        .input-glow:focus-within {
-          box-shadow: 0 0 0 1px rgba(99,102,241,0.4), 0 0 32px rgba(99,102,241,0.12), inset 0 1px 0 rgba(255,255,255,0.04);
-        }
-
-        .feature-card::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          opacity: 0;
-          transition: opacity 0.4s ease;
-          background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), var(--accent, #6366f1)08, transparent 65%);
-        }
-        .feature-card:hover::before { opacity: 1; }
-
-        .scanline {
-          position: fixed;
-          top: 0; left: 0; right: 0;
-          height: 120px;
-          background: linear-gradient(to bottom, transparent, rgba(99,102,241,0.015), transparent);
-          animation: scanline 12s linear infinite;
-          pointer-events: none;
-          z-index: 1;
-        }
-
-        .noise {
-          position: fixed;
-          inset: 0;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-          opacity: 0.025;
-          pointer-events: none;
-          z-index: 0;
-        }
-
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #06060a; }
-        ::-webkit-scrollbar-thumb { background: #1e1e2e; border-radius: 4px; }
-      `}</style>
-
-      {/* ── Noise + Scanline ── */}
-      <div className="noise" />
-      <div className="scanline" />
-
-      {/* ── Ambient Blobs ── */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+    <div className="grain relative min-h-screen overflow-x-clip">
+      {/* ── Atmosphere ── */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="grid-bg absolute inset-0" />
         <div
-          className="absolute w-[700px] h-[700px] rounded-full"
-          style={{
-            top: '-20%', left: '-15%',
-            background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)',
-            animation: 'glow-pulse 6s ease-in-out infinite',
-          }}
+          className="absolute -left-[15%] -top-[10%] h-[55vw] w-[55vw] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(60,224,160,0.10), transparent 68%)', animation: 'glow-pulse 9s ease-in-out infinite' }}
         />
         <div
-          className="absolute w-[600px] h-[600px] rounded-full"
-          style={{
-            bottom: '-10%', right: '-10%',
-            background: 'radial-gradient(circle, rgba(14,165,233,0.07) 0%, transparent 70%)',
-            animation: 'glow-pulse 8s ease-in-out infinite 2s',
-          }}
-        />
-        <div
-          className="absolute w-[400px] h-[400px] rounded-full"
-          style={{
-            top: '40%', right: '20%',
-            background: 'radial-gradient(circle, rgba(16,185,129,0.05) 0%, transparent 70%)',
-            animation: 'glow-pulse 10s ease-in-out infinite 4s',
-          }}
-        />
-        {/* Grid overlay */}
-        <div
-          style={{
-            position: 'absolute', inset: 0,
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)`,
-            backgroundSize: '48px 48px',
-          }}
+          className="absolute -right-[12%] top-[35%] h-[48vw] w-[48vw] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(52,211,238,0.08), transparent 68%)', animation: 'glow-pulse 12s ease-in-out infinite 3s' }}
         />
       </div>
 
-      {/* ── Navbar ── */}
+      {/* ── Nav ── */}
       <motion.nav
-        initial={{ opacity: 0, y: -16 }}
+        initial={{ opacity: 0, y: -14 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-50 flex items-center justify-between px-5 sm:px-8 py-5 max-w-7xl mx-auto"
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-50 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8"
       >
-        <div className="flex items-center gap-3">
-          <div className="relative w-9 h-9 flex-shrink-0">
-            <div
-              className="absolute inset-0 rounded-xl"
-              style={{ background: 'linear-gradient(135deg, #6366f1, #0ea5e9)', boxShadow: '0 0 20px rgba(99,102,241,0.5)' }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center font-display font-black text-base text-white">R</div>
-          </div>
-          <span className="font-display font-bold text-lg text-white hidden sm:block">ReachRadar</span>
-          <div
-            className="hidden sm:flex items-center gap-1 text-[9px] font-black uppercase tracking-[0.2em] px-2 py-0.5 rounded-md border"
-            style={{ color: '#6366f1', borderColor: 'rgba(99,102,241,0.25)', background: 'rgba(99,102,241,0.08)' }}
-          >
-            Ultra
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <a href="#" className="hidden md:block text-sm text-slate-400 hover:text-white transition-colors font-medium px-3 py-2">
-            Platform
+        <Logo badge="Ultra" />
+        <div className="flex items-center gap-1 sm:gap-2">
+          <a href="#features" className="hidden rounded-lg px-3 py-2 text-sm font-medium text-ink-mid transition-colors hover:text-ink md:block">
+            Features
           </a>
-          <a href="#" className="hidden md:block text-sm text-slate-400 hover:text-white transition-colors font-medium px-3 py-2">
-            Docs
+          <a href="#how" className="hidden rounded-lg px-3 py-2 text-sm font-medium text-ink-mid transition-colors hover:text-ink md:block">
+            How it works
           </a>
           <button
             onClick={() => inputRef.current?.focus()}
-            className="text-sm font-bold px-4 py-2 rounded-xl border border-slate-700 hover:border-indigo-500/60 bg-white/[0.03] hover:bg-white/[0.06] text-white transition-all duration-200"
+            className="group inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border-strong)] bg-white/[0.03] px-4 py-2 text-sm font-bold text-ink transition-all hover:border-signal/50 hover:bg-white/[0.06]"
           >
-            Get Started →
+            Get started
+            <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
       </motion.nav>
 
       {/* ── Hero ── */}
       <motion.section
-        style={{ y: heroY, opacity: heroOpacity }}
-        className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 pt-12 sm:pt-20 pb-24"
+        style={{ y: heroY, opacity: heroFade }}
+        className="relative z-10 mx-auto grid max-w-7xl items-center gap-12 px-5 pb-24 pt-10 sm:px-8 sm:pt-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8"
       >
-        <div className="grid lg:grid-cols-[1fr_auto] gap-10 lg:gap-20 items-center">
-
-          {/* Left */}
-          <div className="max-w-2xl">
-            {/* Live badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.6 }}
-              className="inline-flex items-center gap-2.5 mb-8 rounded-full border px-4 py-1.5"
-              style={{
-                background: 'rgba(99,102,241,0.06)',
-                borderColor: 'rgba(99,102,241,0.2)',
-              }}
-            >
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-indigo-500" />
-              </span>
-              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-400">
-                AI Intelligence · Live
-              </span>
-            </motion.div>
-
-            {/* Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.7 }}
-              className="font-display font-black leading-[0.88] tracking-tighter mb-6"
-              style={{ fontSize: 'clamp(3.2rem, 9vw, 7rem)' }}
-            >
-              KNOW YOUR
-              <br />
-              <span className="gradient-text">CHANNEL</span>
-              <br />
-              INSIDE OUT.
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35, duration: 0.6 }}
-              className="text-slate-400 text-base sm:text-lg leading-relaxed mb-10 max-w-xl font-light"
-            >
-              ReachRadar performs deep YouTube channel audits — viral scoring, competitor benchmarking, trend detection, and an AI growth strategy — in under 60 seconds.
-            </motion.p>
-
-            {/* Input */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45, duration: 0.6 }}
-              className="mb-5"
-            >
-              <div
-                className="input-glow relative flex items-center gap-2 rounded-2xl border p-2 transition-all duration-300"
-                style={{
-                  background: 'rgba(255,255,255,0.025)',
-                  borderColor: focused ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.08)',
-                }}
-              >
-                {/* @ prefix */}
-                <div className="flex-shrink-0 pl-2 text-slate-600 font-bold text-lg select-none">@</div>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                  placeholder={placeholder || 'channelname'}
-                  className="flex-1 bg-transparent text-white placeholder-slate-700 outline-none text-base font-semibold min-w-0 py-2"
-                />
-                <button
-                  onClick={handleSubmit}
-                  disabled={!isValid}
-                  className="flex-shrink-0 font-black text-sm px-5 sm:px-7 py-3 rounded-xl text-white transition-all duration-200 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
-                  style={{
-                    background: isValid
-                      ? 'linear-gradient(135deg, #6366f1, #0ea5e9)'
-                      : '#1e1e2e',
-                    boxShadow: isValid ? '0 8px 24px rgba(99,102,241,0.35)' : 'none',
-                  }}
-                >
-                  Analyze
-                </button>
-              </div>
-            </motion.div>
-
-            {/* Example chips */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="flex flex-wrap items-center gap-2"
-            >
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-700">Try:</span>
-              {HANDLES.map((h) => (
-                <button
-                  key={h}
-                  onClick={() => setHandle(h)}
-                  className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] text-slate-500 hover:text-white hover:border-white/20 hover:bg-white/[0.06] transition-all duration-200"
-                >
-                  {h}
-                </button>
-              ))}
-            </motion.div>
-          </div>
-
-          {/* Right: Orbit Visual */}
+        {/* Left */}
+        <div className="max-w-xl">
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="hidden lg:flex items-center justify-center relative flex-shrink-0"
-            style={{ width: 340, height: 340 }}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.6 }}
+            className="mb-7 inline-flex items-center gap-2 rounded-full border border-signal/20 bg-signal/[0.06] px-3.5 py-1.5"
           >
-            {/* Core */}
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-75" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-signal" />
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-signal">AI Creator Intelligence</span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 22 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            className="font-display text-balance text-[clamp(2.7rem,6.5vw,4.8rem)] leading-[0.95] text-ink"
+          >
+            Read the <span className="gradient-text">signal</span> in any YouTube channel.
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="mt-6 max-w-lg text-base leading-relaxed text-ink-mid sm:text-lg"
+          >
+            YantrAnalytics turns any channel into a precision intelligence report — viral scoring,
+            competitor benchmarking, trend radar and an AI growth blueprint, in under 60 seconds.
+          </motion.p>
+
+          {/* Input */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.42, duration: 0.6 }}
+            className="mt-9"
+          >
+            <label htmlFor="handle" className="sr-only">YouTube channel handle</label>
             <div
-              className="relative z-10 w-24 h-24 rounded-3xl flex items-center justify-center font-display font-black text-4xl"
+              className="flex items-center gap-2 rounded-2xl border bg-white/[0.025] p-2 transition-all duration-300"
               style={{
-                background: 'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(14,165,233,0.15))',
-                border: '1px solid rgba(99,102,241,0.3)',
-                boxShadow: '0 0 40px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.06)',
-                animation: 'float 4s ease-in-out infinite',
+                borderColor: showError ? '#fb6f7d66' : focused ? '#3ce0a080' : 'var(--color-border-strong)',
+                boxShadow: focused ? '0 0 0 4px rgba(60,224,160,0.10)' : 'none',
               }}
             >
-              📡
-            </div>
-
-            {/* Orbits */}
-            <OrbitRing size={160} duration={8} color="#6366f1" />
-            <OrbitRing size={240} duration={14} delay={-3} color="#0ea5e9" />
-            <OrbitRing size={320} duration={20} delay={-6} color="#10b981" />
-
-            {/* Floating stat pills */}
-            {[
-              { label: 'Viral Score', val: '87', color: '#6366f1', top: '8%', right: '0%' },
-              { label: 'Engagement', val: '4.2%', color: '#10b981', bottom: '12%', left: '0%' },
-              { label: 'Hook', val: '92/100', color: '#f59e0b', top: '50%', right: '-5%' },
-            ].map((pill) => (
-              <div
-                key={pill.label}
-                className="absolute flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-bold"
+              <Search size={18} className="ml-2 shrink-0 text-ink-low" />
+              <span className="select-none font-mono text-ink-low">@</span>
+              <input
+                id="handle"
+                ref={inputRef}
+                type="text"
+                value={handle}
+                onChange={(e) => setHandle(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => { setFocused(false); setTouched(true) }}
+                onKeyDown={(e) => e.key === 'Enter' && submit()}
+                placeholder={EXAMPLES[exampleIdx]}
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                aria-invalid={showError}
+                className="min-w-0 flex-1 bg-transparent py-2 text-base font-semibold text-ink outline-none placeholder:text-ink-faint"
+              />
+              <button
+                onClick={submit}
+                disabled={!isValid}
+                className="group inline-flex shrink-0 items-center gap-1.5 rounded-xl px-5 py-3 text-sm font-bold text-[#06120d] transition-all duration-200 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-35 sm:px-6"
                 style={{
-                  ...pill,
-                  background: pill.color + '10',
-                  borderColor: pill.color + '30',
-                  color: pill.color,
-                  backdropFilter: 'blur(8px)',
-                  boxShadow: `0 0 16px ${pill.color}18`,
+                  background: 'linear-gradient(135deg, #3ce0a0, #34d3ee)',
+                  boxShadow: isValid ? '0 10px 28px -8px rgba(60,224,160,0.55)' : 'none',
                 }}
               >
-                <span
-                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  style={{ background: pill.color }}
-                />
-                {pill.label}: <span className="font-black ml-0.5">{pill.val}</span>
-              </div>
+                Analyze
+                <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+              </button>
+            </div>
+            <p className="mt-2 h-4 pl-2 text-xs" aria-live="polite">
+              {showError ? (
+                <span className="text-rose">Enter at least {MIN_LEN} characters.</span>
+              ) : (
+                <span className="text-ink-faint">Any public channel — try a handle below.</span>
+              )}
+            </p>
+          </motion.div>
+
+          {/* Example chips */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.56 }}
+            className="mt-4 flex flex-wrap items-center gap-2"
+          >
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-faint">Try</span>
+            {EXAMPLES.slice(0, 4).map((h) => (
+              <button
+                key={h}
+                onClick={() => navigate(`/analyze/${h}`)}
+                className="rounded-lg border border-[var(--color-border)] bg-white/[0.03] px-3 py-1.5 font-mono text-xs text-ink-mid transition-all hover:border-signal/30 hover:text-ink"
+              >
+                @{h}
+              </button>
             ))}
           </motion.div>
         </div>
+
+        {/* Right: WebGL hero */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.25, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          className="flex items-center justify-center"
+        >
+          <HeroScene />
+        </motion.div>
       </motion.section>
 
-      {/* ── Stats Bar ── */}
-      <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 mb-24"
-      >
-        <div
-          className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-2xl overflow-hidden"
-          style={{ background: 'rgba(255,255,255,0.05)' }}
-        >
+      {/* ── Stats ── */}
+      <section className="relative z-10 mx-auto max-w-7xl px-5 pb-28 sm:px-8">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white/[0.04] sm:grid-cols-4">
           {STATS.map((s, i) => (
             <motion.div
               key={s.label}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
+              viewport={{ once: true, margin: '-60px' }}
               transition={{ delay: i * 0.08 }}
-              className="flex flex-col items-center justify-center gap-1 py-8 px-4 text-center"
-              style={{ background: '#06060a' }}
+              className="flex flex-col items-center gap-2 bg-base px-4 py-8 text-center"
             >
-              <div className="text-2xl mb-1">{s.icon}</div>
-              <div className="font-display font-black text-2xl text-white">{s.value}</div>
-              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">{s.label}</div>
+              <s.icon size={20} className="text-signal" />
+              <div className="font-display text-2xl text-ink">{s.value}</div>
+              <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-low">{s.label}</div>
             </motion.div>
           ))}
         </div>
-      </motion.section>
+      </section>
 
       {/* ── Features ── */}
-      <section className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 mb-32">
+      <section id="features" className="relative z-10 mx-auto max-w-7xl px-5 pb-32 sm:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 18 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-12 text-center sm:text-left"
+          viewport={{ once: true, margin: '-80px' }}
+          className="mb-12 max-w-2xl"
         >
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-indigo-500 mb-3">What you get</p>
-          <h2 className="font-display font-black text-3xl sm:text-5xl text-white leading-tight">
-            Everything a creator needs.<br />
-            <span className="text-slate-600">Nothing they don't.</span>
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.25em] text-signal">The instrument</p>
+          <h2 className="font-display text-balance text-3xl leading-tight text-ink sm:text-5xl">
+            Everything a creator needs.{' '}
+            <span className="text-ink-low">Nothing they don't.</span>
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((f, i) => (
             <motion.div
               key={f.label}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 22 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.07 }}
-              onMouseEnter={() => setHoveredFeature(i)}
-              onMouseLeave={() => setHoveredFeature(null)}
-              className="feature-card relative rounded-2xl border p-6 cursor-default transition-all duration-400 group overflow-hidden"
-              style={{
-                '--accent': f.accent,
-                background: hoveredFeature === i
-                  ? `linear-gradient(135deg, ${f.accent}06, rgba(255,255,255,0.01))`
-                  : 'rgba(255,255,255,0.02)',
-                borderColor: hoveredFeature === i ? f.accent + '30' : 'rgba(255,255,255,0.05)',
-                transform: hoveredFeature === i ? 'translateY(-2px)' : 'none',
-                boxShadow: hoveredFeature === i ? `0 16px 40px ${f.accent}10` : 'none',
-              } as React.CSSProperties}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ delay: (i % 3) * 0.08, duration: 0.5 }}
+              className="group relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white/[0.02] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-[var(--color-border-strong)]"
             >
-              {/* Accent line */}
               <div
-                className="absolute top-0 left-6 right-6 h-px transition-all duration-400"
-                style={{
-                  background: `linear-gradient(90deg, transparent, ${f.accent}${hoveredFeature === i ? '60' : '00'}, transparent)`,
-                }}
+                className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+                style={{ background: `radial-gradient(circle, ${f.color}22, transparent 70%)` }}
               />
+              <Icon3D icon={f.icon} color={f.color} size={48} />
+              <h3 className="mt-5 font-display text-lg text-ink">{f.label}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink-mid">{f.desc}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
 
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-5 transition-transform duration-300 group-hover:scale-110"
-                style={{ background: f.accent + '12', border: `1px solid ${f.accent}20` }}
-              >
-                {f.icon}
-              </div>
+      {/* ── How it works ── */}
+      <section id="how" className="relative z-10 mx-auto max-w-7xl px-5 pb-32 sm:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          className="mb-12 max-w-2xl"
+        >
+          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.25em] text-cyan">How it works</p>
+          <h2 className="font-display text-balance text-3xl leading-tight text-ink sm:text-5xl">
+            From handle to blueprint in three steps.
+          </h2>
+        </motion.div>
 
-              <h3 className="font-display font-bold text-white text-base mb-2">{f.label}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed">{f.desc}</p>
-
-              <div
-                className="absolute bottom-5 right-5 text-lg opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0"
-                style={{ color: f.accent }}
-              >
-                →
-              </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {STEPS.map((s, i) => (
+            <motion.div
+              key={s.n}
+              initial={{ opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ delay: i * 0.1 }}
+              className="relative rounded-2xl border border-[var(--color-border)] bg-white/[0.02] p-7"
+            >
+              <span className="font-mono text-sm font-bold text-signal/70">{s.n}</span>
+              <h3 className="mt-4 font-display text-xl text-ink">{s.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink-mid">{s.desc}</p>
+              {i < STEPS.length - 1 && (
+                <ArrowRight className="absolute -right-3 top-1/2 hidden -translate-y-1/2 text-ink-faint md:block" size={20} />
+              )}
             </motion.div>
           ))}
         </div>
       </section>
 
       {/* ── CTA ── */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.7 }}
-        className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 mb-24"
-      >
-        <div
-          className="relative rounded-3xl overflow-hidden p-10 sm:p-16 text-center"
-          style={{
-            background: 'linear-gradient(135deg, rgba(99,102,241,0.1) 0%, rgba(14,165,233,0.06) 100%)',
-            border: '1px solid rgba(99,102,241,0.15)',
-          }}
+      <section className="relative z-10 mx-auto max-w-7xl px-5 pb-24 sm:px-8">
+        <motion.div
+          initial={{ opacity: 0, y: 26 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.7 }}
+          className="relative overflow-hidden rounded-3xl border border-signal/15 p-10 text-center sm:p-16"
+          style={{ background: 'linear-gradient(135deg, rgba(60,224,160,0.09), rgba(52,211,238,0.05))' }}
         >
-          {/* BG decorations */}
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse, rgba(99,102,241,0.1), transparent)', filter: 'blur(40px)' }}
+            className="pointer-events-none absolute left-1/2 top-0 h-52 w-[28rem] -translate-x-1/2 rounded-full blur-3xl"
+            style={{ background: 'radial-gradient(ellipse, rgba(60,224,160,0.16), transparent)' }}
           />
-
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-indigo-400 mb-4">Ready?</p>
-          <h2 className="font-display font-black text-3xl sm:text-5xl text-white mb-4 leading-tight">
-            Run your first audit.<br />It's free.
-          </h2>
-          <p className="text-slate-500 text-base mb-10 max-w-lg mx-auto">
-            Paste any YouTube handle and see your channel through the lens of AI-powered competitive intelligence.
-          </p>
-
-          <div
-            className="flex items-center max-w-sm mx-auto gap-2 rounded-2xl border p-2 mb-4 transition-all duration-300"
-            style={{
-              background: 'rgba(6,6,10,0.8)',
-              borderColor: 'rgba(99,102,241,0.3)',
-            }}
-          >
-            <span className="text-slate-600 font-bold pl-3">@</span>
-            <input
-              type="text"
-              value={handle}
-              onChange={(e) => setHandle(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              placeholder="yourhandle"
-              className="flex-1 bg-transparent text-white placeholder-slate-700 outline-none text-sm font-semibold py-2"
-            />
+          <div className="relative">
+            <Sparkles className="mx-auto mb-5 text-signal" size={26} />
+            <h2 className="font-display text-balance text-3xl leading-tight text-ink sm:text-5xl">
+              Run your first audit. It's free.
+            </h2>
+            <p className="mx-auto mt-4 max-w-lg text-base text-ink-mid">
+              See any channel through the lens of AI-powered competitive intelligence. No signup, no key.
+            </p>
             <button
-              onClick={handleSubmit}
-              disabled={!isValid}
-              className="font-black text-sm px-6 py-2.5 rounded-xl text-white transition-all active:scale-95 disabled:opacity-30"
-              style={{
-                background: 'linear-gradient(135deg, #6366f1, #0ea5e9)',
-                boxShadow: '0 4px 16px rgba(99,102,241,0.3)',
-              }}
+              onClick={() => { inputRef.current?.focus(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+              className="group mx-auto mt-9 inline-flex items-center gap-2 rounded-xl px-7 py-3.5 text-sm font-bold text-[#06120d] transition-all active:scale-[0.97]"
+              style={{ background: 'linear-gradient(135deg, #3ce0a0, #34d3ee)', boxShadow: '0 12px 32px -8px rgba(60,224,160,0.5)' }}
             >
-              Go →
+              Start an analysis
+              <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
             </button>
           </div>
-          <p className="text-[11px] text-slate-700">No signup. No API key. Public data only.</p>
-        </div>
-      </motion.section>
+        </motion.div>
+      </section>
 
       {/* ── Footer ── */}
-      <footer className="relative z-10 border-t border-white/[0.04] py-8 px-5 sm:px-8 max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-6 h-6 rounded-lg flex items-center justify-center font-display font-black text-xs text-white"
-            style={{ background: 'linear-gradient(135deg, #6366f1, #0ea5e9)' }}
-          >
-            R
-          </div>
-          <span className="text-slate-700 text-xs font-semibold">ReachRadar Ultra</span>
-        </div>
-        <p className="text-[10px] text-slate-800 font-medium text-center">
+      <footer className="relative z-10 mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-[var(--color-border)] px-5 py-8 sm:flex-row sm:px-8">
+        <Logo size={28} />
+        <p className="text-center text-[11px] text-ink-low">
           Built with FastAPI · Gemini AI · yt-dlp · Public YouTube data only
         </p>
-        <div className="flex items-center gap-4">
-          <a href="#" className="text-[11px] text-slate-700 hover:text-slate-400 transition-colors">Docs</a>
-          <a href="#" className="text-[11px] text-slate-700 hover:text-slate-400 transition-colors">GitHub</a>
+        <div className="flex items-center gap-4 text-ink-low">
+          <a href="#features" className="text-xs transition-colors hover:text-ink-mid">Features</a>
+          <a href="https://github.com" target="_blank" rel="noreferrer" aria-label="GitHub repository" className="transition-colors hover:text-ink-mid">
+            <GitFork size={16} />
+          </a>
         </div>
       </footer>
     </div>
