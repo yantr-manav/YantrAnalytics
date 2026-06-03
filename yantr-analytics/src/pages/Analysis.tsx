@@ -3,8 +3,8 @@ import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
 import mermaid from 'mermaid'
-import createPlotlyComponent from 'react-plotly.js/factory'
-import Plotly from 'plotly.js-basic-dist'
+import createPlotlyComponentImport from 'react-plotly.js/factory'
+import PlotlyBasic from 'plotly.js-basic-dist'
 import toast from 'react-hot-toast'
 import {
   LayoutDashboard,
@@ -64,7 +64,13 @@ type Tab = 'overview' | 'competitors' | 'trends' | 'report' | 'tools'
 
 // Wire react-plotly.js to the lightweight "basic" distribution (bar/pie/scatter
 // only) instead of the ~4 MB full bundle — those are the only trace types used.
-const PlotComponent = createPlotlyComponent(Plotly)
+// Both modules are CJS/UMD; unwrap the interop `.default` defensively before use.
+const createPlotlyComponent =
+  (createPlotlyComponentImport as unknown as { default?: typeof createPlotlyComponentImport }).default ??
+  createPlotlyComponentImport
+const PlotComponent = createPlotlyComponent(
+  (PlotlyBasic as unknown as { default?: object }).default ?? PlotlyBasic,
+)
 
 const LOADING_STEPS = [
   { icon: Satellite, label: 'Harvesting channel data', sub: 'videos · shorts · community · subscribers' },
@@ -913,8 +919,8 @@ export default function Analysis() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handle])
 
-  if (phase === 'loading' || !data) return <LoadingWarRoom handle={fullHandle} />
   if (phase === 'error') return <ErrorState message={error || 'Unknown error'} />
+  if (phase === 'loading' || !data) return <LoadingWarRoom handle={fullHandle} />
 
   const { profile, analysis } = data
   const stats = profile?.stats ?? {
